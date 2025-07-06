@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\KategoriSparepartController;
+use App\Http\Controllers\Api\SparepartController;
 use App\Http\Controllers\Api\UsersController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -18,3 +20,12 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [UsersController::class, 'register']);
 Route::post('/login', [UsersController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [UsersController::class, 'logout']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/kategori', [KategoriSparepartController::class, 'index']);
+
+    Route::get('/sparepart', [SparepartController::class, 'index']);
+    Route::get('/sparepart/{id}', [SparepartController::class, 'show']);
+
+    Route::post('/logout', [UsersController::class, 'logout']);
+});

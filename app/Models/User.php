@@ -12,20 +12,22 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    protected $table = 'tb_users';
+
     // UUID support
     protected $keyType = 'string';
     public $incrementing = false;
 
     protected $fillable = [
         'id',
-        'name',
+        'nama',
         'email',
         'password',
         'role',
         'alamat',
         'no_kendaraan',
         'nama_kendaraan',
-        'image_profile',
+        'profile',
     ];
 
     protected $hidden = [

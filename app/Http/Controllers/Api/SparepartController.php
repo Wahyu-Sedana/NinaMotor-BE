@@ -13,38 +13,31 @@ class SparepartController extends Controller
      */
     public function index()
     {
-        //
+        $spareparts = Sparepart::with('kategori')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $spareparts
+        ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Menampilkan detail satu sparepart berdasarkan ID.
      */
-    public function store(Request $request)
+    public function show($id)
     {
-        //
-    }
+        $sparepart = Sparepart::with('kategori')->find($id);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Sparepart $sparepart)
-    {
-        //
-    }
+        if (!$sparepart) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sparepart tidak ditemukan'
+            ], 404);
+        }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Sparepart $sparepart)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Sparepart $sparepart)
-    {
-        //
+        return response()->json([
+            'success' => true,
+            'data' => $sparepart
+        ]);
     }
 }
