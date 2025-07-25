@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\KategoriSparepartController;
 use App\Http\Controllers\Api\SparepartController;
 use App\Http\Controllers\Api\UsersController;
@@ -26,6 +27,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/sparepart', [SparepartController::class, 'index']);
     Route::get('/sparepart/{id}', [SparepartController::class, 'show']);
+    Route::post('/sparepart', [SparepartController::class, 'store']);
+    Route::put('/sparepart/{id}', [SparepartController::class, 'update']);
+    Route::delete('/sparepart/{id}', [SparepartController::class, 'destroy']);
+
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+
+    Route::post('/profile', [UsersController::class, 'profile']);
 
     Route::post('/logout', [UsersController::class, 'logout']);
 });
