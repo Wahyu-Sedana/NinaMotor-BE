@@ -42,17 +42,25 @@ class CartController extends Controller
         $sparepart = Sparepart::find($request->sparepart_id);
         Log::info("Sparepart ditemukan: {$request->sparepart_id}, stok saat ini: {$sparepart->stok}");
 
+        // if ($sparepart->stok < $request->quantity) {
+        //     Log::warning("Stok tidak mencukupi: diminta {$request->quantity}, tersedia {$sparepart->stok}");
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Stok tidak mencukupi',
+        //     ], 200);
+        // }
+
+        // $sparepart->stok -= $request->quantity;
+        // $sparepart->save();
+        // Log::info("Stok berhasil dikurangi, sisa: {$sparepart->stok}");
+
         if ($sparepart->stok < $request->quantity) {
             Log::warning("Stok tidak mencukupi: diminta {$request->quantity}, tersedia {$sparepart->stok}");
             return response()->json([
                 'success' => false,
-                'message' => 'Stok tidak mencukupi',
+                'message' => 'Stok tidak mencukupi untuk saat ini',
             ], 200);
         }
-
-        $sparepart->stok -= $request->quantity;
-        $sparepart->save();
-        Log::info("Stok berhasil dikurangi, sisa: {$sparepart->stok}");
 
         $cart = CartsModel::where('user_id', $user->id)->first();
 
@@ -142,6 +150,53 @@ class CartController extends Controller
                 'user_id' => $cart->user_id,
                 'items' => $items,
             ]
+        ]);
+    }
+
+    public function remove(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'sparepart_id' => 'required|string|exists:tb_sparepart,kode_sparepart',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pengguna tidak terautentikasi',
+            ], 401);
+        }
+
+        $cart = CartsModel::where('user_id', $user->id)->first();
+
+        if (!$cart) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cart tidak ditemukan',
+            ], 404);
+        }
+
+        $items = $cart->items;
+        $updatedItems = array_filter($items, function ($item) use ($request) {
+            return $item['sparepart_id'] !== $request->sparepart_id;
+        });
+
+        $cart->items = array_values($updatedItems);
+        $cart->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Item berhasil dihapus dari cart',
+            'data' => $cart
         ]);
     }
 }

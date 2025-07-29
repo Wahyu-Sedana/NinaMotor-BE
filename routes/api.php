@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\KategoriSparepartController;
+use App\Http\Controllers\Api\ServisMotorController;
 use App\Http\Controllers\Api\SparepartController;
 use App\Http\Controllers\Api\UsersController;
 use Illuminate\Http\Request;
@@ -34,7 +36,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart', [CartController::class, 'store']);
     Route::put('/cart/{id}', [CartController::class, 'update']);
-    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+    Route::post('/cart/remove', [CartController::class, 'remove']);
+
+    Route::post('/bookmark', [BookmarkController::class, 'store']);
+    Route::get('/bookmark', [BookmarkController::class, 'show']);
+    Route::delete('/bookmark/remove', [BookmarkController::class, 'destroy']);
+
+    Route::get('/servis-motor', [ServisMotorController::class, 'index']);
+    Route::post('/servis-motor', [ServisMotorController::class, 'store']);
+    Route::get('/servis-motor/{id}', [ServisMotorController::class, 'show']);
 
     Route::post('/profile', [UsersController::class, 'profile']);
 
