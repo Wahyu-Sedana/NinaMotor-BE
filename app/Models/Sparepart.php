@@ -17,7 +17,7 @@ class Sparepart extends Model
     protected $fillable = [
         'kode_sparepart',
         'kategori_id',
-        'nama',
+        'nama_sparepart',
         'deskripsi',
         'stok',
         'harga_beli',

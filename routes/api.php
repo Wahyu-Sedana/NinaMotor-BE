@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\KategoriSparepartController;
 use App\Http\Controllers\Api\ServisMotorController;
 use App\Http\Controllers\Api\SparepartController;
+use App\Http\Controllers\Api\TransaksiController;
 use App\Http\Controllers\Api\UsersController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +25,8 @@ Route::post('/register', [UsersController::class, 'register']);
 Route::post('/login', [UsersController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [UsersController::class, 'logout']);
 
+Route::post('/midtrans/callback', [TransaksiController::class, 'midtransCallback']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/kategori', [KategoriSparepartController::class, 'index']);
 
@@ -32,6 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/sparepart', [SparepartController::class, 'store']);
     Route::put('/sparepart/{id}', [SparepartController::class, 'update']);
     Route::delete('/sparepart/{id}', [SparepartController::class, 'destroy']);
+    Route::post('/sparepart/kategori', [SparepartController::class, 'showDataByKategori']);
 
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart', [CartController::class, 'store']);
@@ -45,6 +49,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/servis-motor', [ServisMotorController::class, 'index']);
     Route::post('/servis-motor', [ServisMotorController::class, 'store']);
     Route::get('/servis-motor/{id}', [ServisMotorController::class, 'show']);
+
+    Route::post('/transaksi/create', [TransaksiController::class, 'createTransaction']);
 
     Route::post('/profile', [UsersController::class, 'profile']);
 

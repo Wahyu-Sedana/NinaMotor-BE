@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Sparepart;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class SparepartController extends Controller
@@ -35,6 +36,37 @@ class SparepartController extends Controller
             'data' => $sparepart
         ]);
     }
+
+    public function showDataByKategori(Request $request)
+    {
+        $request->validate([
+            'nama_kategori' => 'required|string'
+        ]);
+
+        $namaKategori = $request->input('nama_kategori');
+
+        $spareparts = Sparepart::join('tb_kategori_sparepart as k', 'tb_sparepart.kategori_id', '=', 'k.id')
+            ->where('k.nama_kategori', 'like', '%' . $namaKategori . '%')
+            ->select('tb_sparepart.*')
+            ->with('kategori')
+            ->get();
+
+        if ($spareparts->isEmpty()) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Tidak ada sparepart ditemukan untuk kategori: ' . $namaKategori
+            ], 200);
+        }
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Data sparepart berhasil ditemukan',
+            'kategori' => $namaKategori,
+            'total' => $spareparts->count(),
+            'data' => $spareparts
+        ]);
+    }
+
 
     public function store(Request $request)
     {
@@ -104,7 +136,6 @@ class SparepartController extends Controller
             'data' => $sparepart
         ], 200);
     }
-
 
     public function destroy($id)
     {

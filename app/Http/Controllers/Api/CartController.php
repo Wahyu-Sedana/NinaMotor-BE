@@ -127,13 +127,17 @@ class CartController extends Controller
         }
 
         $items = [];
+        $total = 0;
         foreach ($cart->items as $item) {
             $sparepart = Sparepart::find($item['sparepart_id']);
 
             if ($sparepart) {
+                $subtotal = $sparepart->harga_jual * $item['quantity'];
+                $total += $subtotal;
+
                 $items[] = [
                     'sparepart_id' => $sparepart->kode_sparepart,
-                    'nama' => $sparepart->nama,
+                    'nama_sparepart' => $sparepart->nama_sparepart,
                     'gambar' => $sparepart->gambar_produk,
                     'harga_jual' => $sparepart->harga_jual,
                     'quantity' => $item['quantity'],
@@ -149,6 +153,7 @@ class CartController extends Controller
                 'id' => $cart->id,
                 'user_id' => $cart->user_id,
                 'items' => $items,
+                'total' => $total
             ]
         ]);
     }

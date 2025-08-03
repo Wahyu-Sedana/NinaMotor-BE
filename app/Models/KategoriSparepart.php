@@ -12,7 +12,7 @@ class KategoriSparepart extends Model
     protected $table = 'tb_kategori_sparepart';
 
     protected $fillable = [
-        'nama',
+        'nama_kategori',
         'deskripsi',
     ];
 
