@@ -11,16 +11,42 @@ use Illuminate\Support\Facades\Validator;
 use Midtrans\Config;
 use Illuminate\Support\Str;
 use Midtrans\Snap;
+use Midtrans\Transaction as MidtransTransaction;
+
+use App\Helpers\MidtransHelper;
+
 
 class TransaksiController extends Controller
 {
     public function __construct()
     {
-        Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = false;
+        Config::$serverKey = config('services.midtrans.server_key');
+        Config::$isProduction = config('services.midtrans.is_production');
         Config::$isSanitized = true;
         Config::$is3ds = true;
     }
+
+    protected function mapStatus($midtransStatus)
+    {
+        return match ($midtransStatus) {
+            'settlement', 'capture' => 'berhasil',
+            'pending' => 'pending',
+            'expire' => 'expired',
+            'cancel', 'deny' => 'gagal',
+            default => 'unknown',
+        };
+    }
+
+    protected function mapTransaction($midtransStatus)
+    {
+        return match ($midtransStatus) {
+            'settlement', 'capture' => 'selesai',
+            'pending' => 'pending',
+            'expire', 'cancel', 'deny' => 'dibatalkan',
+            default => 'unknown',
+        };
+    }
+
 
     public function createTransaction(Request $request)
     {
@@ -201,5 +227,58 @@ class TransaksiController extends Controller
         $transaksi->save();
 
         return response()->json(['message' => 'Callback diproses'], 200);
+    }
+
+    public function getTransactionList(Request $request)
+    {
+        $query = Transaksi::query();
+
+        if ($request->user_id) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        $transactions = $query->orderByDesc('tanggal_transaksi')->limit(20)->get();
+
+
+        $results = $transactions->map(function ($trx) {
+            try {
+                $midtrans = MidtransTransaction::status($trx->id);
+
+                $trx->status_pembayaran = $this->mapStatus($midtrans->transaction_status);
+                $trx->status_transaksi = $this->mapTransaction($midtrans->transaction_status);
+                $trx->save();
+
+                if ($midtrans->transaction_status === 'pending' && !empty($midtrans->va_numbers)) {
+                    $bank = $midtrans->va_numbers[0]->bank ?? null;
+                    $va_number = $midtrans->va_numbers[0]->va_number ?? null;
+
+                    Log::info('Bank:', [$bank]);
+                    Log::info('VA Number:', [$va_number]);
+
+                    return array_merge($trx->toArray(), [
+                        'midtrans_data' => $midtrans,
+                        'payment_instruction' => [
+                            'bank' => strtoupper($bank),
+                            'va_number' => $va_number,
+                        ],
+                    ]);
+                }
+
+                return array_merge($trx->toArray(), ['midtrans_data' => $midtrans]);
+            } catch (\Exception $e) {
+                Log::error('Gagal ambil data Midtrans', [
+                    'order_id' => $trx->id,
+                    'error' => $e->getMessage()
+                ]);
+                return $trx;
+            }
+        });
+
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Transaction list retrieved successfully',
+            'data' => ['transactions' => $results],
+        ]);
     }
 }

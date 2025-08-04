@@ -51,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/servis-motor/{id}', [ServisMotorController::class, 'show']);
 
     Route::post('/transaksi/create', [TransaksiController::class, 'createTransaction']);
+    Route::get('/transaksi/list', [TransaksiController::class, 'getTransactionList']);
 
     Route::post('/profile', [UsersController::class, 'profile']);
 
