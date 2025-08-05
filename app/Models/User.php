@@ -28,6 +28,7 @@ class User extends Authenticatable
         'no_kendaraan',
         'nama_kendaraan',
         'profile',
+        'fcm_token'
     ];
 
     protected $hidden = [

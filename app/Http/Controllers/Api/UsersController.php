@@ -22,6 +22,7 @@ class UsersController extends Controller
             'no_kendaraan'   => 'nullable|string',
             'nama_kendaraan' => 'nullable|string',
             'image_profile'  => 'nullable|string',
+            'fcm_token'      => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -42,6 +43,7 @@ class UsersController extends Controller
                 'no_kendaraan'   => $request->no_kendaraan,
                 'nama_kendaraan' => $request->nama_kendaraan,
                 'image_profile'  => $request->image_profile,
+                'fcm_token'      => $request->fcm_token,
             ]);
 
             Log::debug($user);
@@ -61,31 +63,50 @@ class UsersController extends Controller
         }
     }
 
-
     public function login(Request $request)
     {
-        $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required|string',
+        $validator = Validator::make($request->all(), [
+            'email'     => 'required|email',
+            'password'  => 'required|string',
+            'fcm_token' => 'nullable|string',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 422,
+                'message' => 'Validation error',
+                'errors'  => $validator->errors(),
+            ], 200);
+        }
 
         try {
             $user = User::where('email', $request->email)->first();
 
-            if (! $user) {
+            if (!$user) {
                 return response()->json([
                     'status'  => 404,
                     'message' => 'User not found',
-                    'user' => []
+                    'user'    => []
                 ], 200);
             }
 
-            if (! $user || ! Hash::check($request->password, $user->password)) {
+            if (!Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'status'  => 401,
                     'message' => 'Invalid credentials',
-                    'user' => []
+                    'user'    => []
                 ], 200);
+            }
+
+            if ($request->has('fcm_token') && $request->fcm_token) {
+                $user->fcm_token = $request->fcm_token;
+                $user->save();
+
+                Log::info('FCM token updated for user', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'fcm_token_updated' => true
+                ]);
             }
 
             $token = $user->createToken('api_token')->plainTextToken;
@@ -128,11 +149,150 @@ class UsersController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        try {
+            $user = $request->user();
 
-        return response()->json([
-            'status'  => 200,
-            'message' => 'Logout success',
+            // Clear FCM token on logout for security
+            $user->fcm_token = null;
+            $user->save();
+
+            $request->user()->currentAccessToken()->delete();
+
+            Log::info('User logged out and FCM token cleared', [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
+
+            return response()->json([
+                'status'  => 200,
+                'message' => 'Logout success',
+            ]);
+        } catch (\Throwable $th) {
+            Log::error('Logout error: ' . $th->getMessage());
+
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Logout failed',
+            ], 500);
+        }
+    }
+
+    /**
+     * Save or update FCM token for authenticated user
+     */
+    public function saveFCMToken(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'fcm_token' => 'required|string',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 422,
+                'message' => 'Validation error',
+                'errors'  => $validator->errors(),
+            ], 200);
+        }
+
+        try {
+            $user = $request->user();
+            $oldToken = $user->fcm_token;
+
+            $user->fcm_token = $request->fcm_token;
+            $user->save();
+
+            Log::info('FCM token saved/updated', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'old_token' => $oldToken ? 'exists' : 'none',
+                'new_token' => 'updated'
+            ]);
+
+            return response()->json([
+                'status'  => 200,
+                'message' => 'FCM token saved successfully',
+            ]);
+        } catch (\Throwable $th) {
+            Log::error('Save FCM token error: ' . $th->getMessage());
+
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Failed to save FCM token',
+            ], 500);
+        }
+    }
+
+    /**
+     * Update user profile including FCM token
+     */
+    public function updateProfile(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'nama'           => 'nullable|string|max:255',
+            'alamat'         => 'nullable|string',
+            'no_kendaraan'   => 'nullable|string',
+            'nama_kendaraan' => 'nullable|string',
+            'image_profile'  => 'nullable|string',
+            'fcm_token'      => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => 422,
+                'message' => 'Validation error',
+                'errors'  => $validator->errors(),
+            ], 200);
+        }
+
+        try {
+            $user = $request->user();
+
+            if ($request->has('nama')) {
+                $user->nama = $request->nama;
+            }
+            if ($request->has('alamat')) {
+                $user->alamat = $request->alamat;
+            }
+            if ($request->has('no_kendaraan')) {
+                $user->no_kendaraan = $request->no_kendaraan;
+            }
+            if ($request->has('nama_kendaraan')) {
+                $user->nama_kendaraan = $request->nama_kendaraan;
+            }
+            if ($request->has('image_profile')) {
+                $user->image_profile = $request->image_profile;
+            }
+            if ($request->has('fcm_token')) {
+                $user->fcm_token = $request->fcm_token;
+            }
+
+            $user->save();
+
+            Log::info('User profile updated', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'updated_fields' => array_keys($request->only([
+                    'nama',
+                    'alamat',
+                    'no_kendaraan',
+                    'nama_kendaraan',
+                    'image_profile',
+                    'fcm_token'
+                ]))
+            ]);
+
+            return response()->json([
+                'status'  => 200,
+                'message' => 'Profile updated successfully',
+                'user'    => $user,
+            ]);
+        } catch (\Throwable $th) {
+            Log::error('Update profile error: ' . $th->getMessage());
+
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Failed to update profile',
+            ], 500);
+        }
     }
 }

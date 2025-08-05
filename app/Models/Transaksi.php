@@ -22,7 +22,6 @@ class Transaksi extends Model
         'total',
         'metode_pembayaran',
         'status_pembayaran',
-        'status_transaksi',
     ];
 
     protected static function boot()

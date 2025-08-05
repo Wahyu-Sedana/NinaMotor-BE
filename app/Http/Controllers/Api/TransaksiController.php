@@ -4,16 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaksi;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Midtrans\Config;
 use Illuminate\Support\Str;
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
 use Midtrans\Snap;
 use Midtrans\Transaction as MidtransTransaction;
 
-use App\Helpers\MidtransHelper;
 
 
 class TransaksiController extends Controller
@@ -24,6 +27,17 @@ class TransaksiController extends Controller
         Config::$isProduction = config('services.midtrans.is_production');
         Config::$isSanitized = true;
         Config::$is3ds = true;
+
+        try {
+            $factory = (new Factory)
+                ->withServiceAccount(storage_path('app/firebase-credentials.json'))
+                ->withProjectId(config('services.firebase.project_id'));
+
+            $this->messaging = $factory->createMessaging();
+        } catch (\Exception $e) {
+            Log::error('Firebase initialization failed: ' . $e->getMessage());
+            $this->messaging = null;
+        }
     }
 
     protected function mapStatus($midtransStatus)
@@ -156,7 +170,6 @@ class TransaksiController extends Controller
                 'total' => $request->total,
                 'metode_pembayaran' => $request->metode_pembayaran ?? 'midtrans',
                 'status_pembayaran' => 'pending',
-                'status_transaksi' => 'pending',
                 'snap_token' => $snapToken,
                 'alamat' => $request->alamat,
             ]);
@@ -195,38 +208,165 @@ class TransaksiController extends Controller
         }
     }
 
-    public function midtransCallback(Request $request)
+    public function midtransCallback()
     {
-        $notif = new \Midtrans\Notification();
+        try {
+            $notif = new \Midtrans\Notification();
 
-        $transaksi = Transaksi::find($notif->order_id);
+            $transaksi = Transaksi::find($notif->order_id);
 
-        if (!$transaksi) {
-            return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
+            if (!$transaksi) {
+                Log::error('Transaction not found for order_id: ' . $notif->order_id);
+                return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
+            }
+
+
+            $oldStatus = $transaksi->status_pembayaran;
+
+            switch ($notif->transaction_status) {
+                case 'capture':
+                case 'settlement':
+                    $transaksi->status_pembayaran = 'berhasil';
+                    break;
+
+                case 'pending':
+                    $transaksi->status_pembayaran = 'pending';
+                    break;
+
+                case 'deny':
+                case 'cancel':
+                case 'expire':
+                    $transaksi->status_pembayaran = $notif->transaction_status == 'expire' ? 'expired' : 'gagal';
+                    break;
+            }
+
+            $transaksi->save();
+
+            if ($oldStatus !== $transaksi->status_pembayaran) {
+                $this->sendFirebaseNotification($transaksi, $notif);
+            }
+
+            Log::info('Midtrans callback processed successfully', [
+                'order_id' => $notif->order_id,
+                'old_status' => $oldStatus,
+                'new_status' => $transaksi->status_pembayaran,
+                'transaction_status' => $notif->transaction_status
+            ]);
+
+            return response()->json(['message' => 'Callback diproses'], 200);
+        } catch (\Exception $e) {
+            Log::error('Midtrans callback processing failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json(['message' => 'Callback processing failed'], 500);
         }
+    }
 
-        switch ($notif->transaction_status) {
-            case 'capture':
-            case 'settlement':
-                $transaksi->status_pembayaran = 'berhasil';
-                $transaksi->status_transaksi = 'selesai';
-                break;
+    /**
+     * Send Firebase notification to user
+     */
+    private function sendFirebaseNotification($transaksi, $notif = null)
+    {
+        try {
+            if (!$this->messaging) {
+                Log::warning('Firebase messaging not initialized');
+                return;
+            }
+
+            $user = User::find($transaksi->user_id);
+
+            if (!$user || !$user->fcm_token) {
+                Log::warning('FCM token not found for user: ' . $transaksi->user_id);
+                return;
+            }
+
+            $notificationData = $this->getNotificationContent($transaksi);
+
+            $additionalData = [
+                'transaction_id' => $transaksi->id,
+                'order_id' => $transaksi->id,
+                'status' => $transaksi->status_pembayaran,
+                'amount' => (string) $transaksi->total,
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                'type' => 'payment_update',
+                'timestamp' => now()->toISOString(),
+            ];
+
+            if ($notif) {
+                $additionalData['payment_type'] = $notif->payment_type ?? '';
+                $additionalData['transaction_time'] = $notif->transaction_time ?? '';
+                if ($notif->payment_type === 'bank_transfer' && isset($notif->va_numbers)) {
+                    $additionalData['va_number'] = $notif->va_numbers[0]->va_number ?? '';
+                    $additionalData['bank'] = $notif->va_numbers[0]->bank ?? '';
+                }
+            }
+
+            $message = CloudMessage::withTarget('token', $user->fcm_token)
+                ->withNotification(Notification::create(
+                    $notificationData['title'],
+                    $notificationData['body']
+                ))
+                ->withData($additionalData);
+
+            $result = $this->messaging->send($message);
+
+            Log::info('Firebase notification sent successfully', [
+                'transaction_id' => $transaksi->id,
+                'user_id' => $transaksi->user_id,
+                'status' => $transaksi->status_pembayaran,
+                'message_id' => $result->target()
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send Firebase notification', [
+                'transaction_id' => $transaksi->id ?? 'unknown',
+                'user_id' => $transaksi->user_id ?? 'unknown',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    /**
+     * Get notification content based on transaction status
+     */
+    private function getNotificationContent($transaksi)
+    {
+        $amount = 'Rp ' . number_format($transaksi->total ?? 0, 0, ',', '.');
+        $orderId = $transaksi->id;
+
+        switch ($transaksi->status_pembayaran) {
+            case 'berhasil':
+                return [
+                    'title' => 'Pembayaran Berhasil!',
+                    'body' => "Pembayaran untuk order #{$orderId} sebesar {$amount} telah berhasil diproses. Terima kasih!"
+                ];
 
             case 'pending':
-                $transaksi->status_pembayaran = 'pending';
-                break;
+                return [
+                    'title' => 'Menunggu Pembayaran',
+                    'body' => "Order #{$orderId} sebesar {$amount} menunggu pembayaran. Segera lakukan pembayaran."
+                ];
 
-            case 'deny':
-            case 'cancel':
-            case 'expire':
-                $transaksi->status_pembayaran = $notif->transaction_status == 'expire' ? 'expired' : 'gagal';
-                $transaksi->status_transaksi = 'dibatalkan';
-                break;
+            case 'gagal':
+                return [
+                    'title' => 'Pembayaran Gagal',
+                    'body' => "Pembayaran untuk order #{$orderId} sebesar {$amount} gagal diproses. Silakan coba lagi."
+                ];
+
+            case 'expired':
+                return [
+                    'title' => 'Pembayaran Expired',
+                    'body' => "Waktu pembayaran untuk order #{$orderId} sebesar {$amount} telah habis. Silakan buat pesanan baru."
+                ];
+
+            default:
+                return [
+                    'title' => 'Update Transaksi',
+                    'body' => "Status transaksi order #{$orderId} telah diperbarui."
+                ];
         }
-
-        $transaksi->save();
-
-        return response()->json(['message' => 'Callback diproses'], 200);
     }
 
     public function getTransactionList(Request $request)
@@ -237,6 +377,10 @@ class TransaksiController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
+        if ($request->status) {
+            $query->where('status_pembayaran', $request->status);
+        }
+
         $transactions = $query->orderByDesc('tanggal_transaksi')->limit(20)->get();
 
 
@@ -245,7 +389,6 @@ class TransaksiController extends Controller
                 $midtrans = MidtransTransaction::status($trx->id);
 
                 $trx->status_pembayaran = $this->mapStatus($midtrans->transaction_status);
-                $trx->status_transaksi = $this->mapTransaction($midtrans->transaction_status);
                 $trx->save();
 
                 if ($midtrans->transaction_status === 'pending' && !empty($midtrans->va_numbers)) {
