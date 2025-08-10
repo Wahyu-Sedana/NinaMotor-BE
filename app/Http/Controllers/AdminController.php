@@ -6,6 +6,7 @@ use App\Models\Sparepart;
 use App\Models\Transaksi;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -23,13 +24,49 @@ class AdminController extends Controller
             ->where('status_pembayaran', 'berhasil')
             ->sum('total');
 
+        $ordersPerMonth = Transaksi::select(
+            DB::raw('MONTH(created_at) as month'),
+            DB::raw('COUNT(*) as total')
+        )
+            ->whereYear('created_at', now()->year)
+            ->where('status_pembayaran', 'berhasil')
+            ->groupBy(DB::raw('MONTH(created_at)'))
+            ->orderBy('month')
+            ->get();
+
+        $dataPerMonth = Transaksi::select(
+            DB::raw('MONTH(created_at) as month'),
+            DB::raw('COUNT(*) as total_orders'),
+            DB::raw('SUM(total) as total_revenue')
+        )
+            ->whereYear('created_at', now()->year)
+            ->where('status_pembayaran', 'berhasil')
+            ->groupBy(DB::raw('MONTH(created_at)'))
+            ->orderBy('month')
+            ->get();
+
+
+        $months = [];
+        $totals = [];
+        $revenues = [];
+        $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+        for ($i = 1; $i <= 12; $i++) {
+            $months[] = $monthNames[$i - 1];
+            $totals[] = $ordersPerMonth->firstWhere('month', $i)->total ?? 0;
+            $revenues[] = $dataPerMonth->firstWhere('month', $i)->total_revenue ?? 0;
+        }
+
         return view('admin.dashboard', compact(
             'totalProducts',
             'totalUsers',
             'totalOrder',
             'totalTransaksi',
             'todayOrders',
-            'totalRevenue'
+            'totalRevenue',
+            'months',
+            'totals',
+            'revenues'
         ));
     }
 }

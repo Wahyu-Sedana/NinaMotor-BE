@@ -9,64 +9,63 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AdminMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if user is authenticated
-        if (!Auth::check()) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Unauthenticated.'
-                ], 401);
-            }
+        // Explicitly use web guard
+        $user = Auth::guard('web')->user();
 
-            return redirect()->route('admin.login')
-                ->with('error', 'Please login to access the admin panel.');
+        if (!$user) {
+            return $this->unauthenticatedResponse($request);
         }
 
-        $user = Auth::user();
-
-        // Check if user has admin role
         if ($user->role !== 'admin') {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Forbidden. Admin access required.'
-                ], 403);
-            }
-
-            // Log unauthorized access attempt
-            \Log::warning('Unauthorized admin access attempt', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'role' => $user->role,
-                'ip' => $request->ip(),
-                'url' => $request->fullUrl(),
-            ]);
-
-            Auth::logout();
-
-            return redirect()->route('admin.login')
-                ->with('error', 'You do not have permission to access the admin panel.');
+            return $this->forbiddenResponse($request, $user);
         }
 
-        // Check if user account is active (if you have status field)
         if (isset($user->status) && $user->status !== 'active') {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Account deactivated.'
-                ], 403);
-            }
-
-            Auth::logout();
-
-            return redirect()->route('admin.login')
-                ->with('error', 'Your account has been deactivated. Please contact administrator.');
+            return $this->deactivatedResponse($request);
         }
+
+        // Set user ke default guard untuk compatibility
+        Auth::setUser($user);
 
         return $next($request);
+    }
+
+    protected function unauthenticatedResponse(Request $request)
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        return redirect()->route('admin.login')
+            ->with('error', 'Please login to access the admin panel.');
+    }
+
+    protected function forbiddenResponse(Request $request, $user)
+    {
+        \Log::warning('Unauthorized admin access attempt', [
+            'user_id' => $user->id ?? null,
+            'email'   => $user->email ?? null,
+            'role'    => $user->role ?? null,
+            'ip'      => $request->ip(),
+            'url'     => $request->fullUrl(),
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Forbidden. Admin access required.'], 403);
+        }
+
+        return redirect()->route('admin.login')
+            ->with('error', 'You do not have permission to access the admin panel.');
+    }
+
+    protected function deactivatedResponse(Request $request)
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Account deactivated.'], 403);
+        }
+
+        return redirect()->route('admin.login')
+            ->with('error', 'Your account has been deactivated. Please contact administrator.');
     }
 }

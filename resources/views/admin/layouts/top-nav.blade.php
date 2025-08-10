@@ -18,7 +18,10 @@
                         <i class="fas fa-user text-gray-600 text-sm"></i>
                     </span>
 
-                    <span class="hidden md:block">Admin User</span>
+                    <span class="hidden md:block">
+                        {{ Auth::user()->nama ?? 'Guest' }}
+                    </span>
+
                     <i class="fas fa-chevron-down text-sm"></i>
                 </button>
                 <div id="profileMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden">

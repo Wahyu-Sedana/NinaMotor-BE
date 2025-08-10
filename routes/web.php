@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminDataCustomerController;
+use App\Http\Controllers\AdminKategoriSparepartController;
 use App\Http\Controllers\AdminSparepartController;
 use App\Http\Controllers\AuthenticationController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +34,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         return redirect()->route('admin.dashboard');
     });
 
-    //
+    // Sparepart
     Route::resource('sparepart', AdminSparepartController::class);
+
+    // Kategori Sparepart
+    Route::resource('kategori-sparepart', AdminKategoriSparepartController::class);
+
+    // Customer
+    Route::resource('customer', AdminDataCustomerController::class);
 });

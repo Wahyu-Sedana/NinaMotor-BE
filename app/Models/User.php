@@ -25,8 +25,6 @@ class User extends Authenticatable
         'password',
         'role',
         'alamat',
-        'no_kendaraan',
-        'nama_kendaraan',
         'profile',
         'fcm_token'
     ];

@@ -1,9 +1,9 @@
 @extends('admin.layouts.app')
 
 @section('content')
-    <div class="container-fluid">
+    <div class="container container mx-auto px-6 py-8">
         {{-- HEADER --}}
-        <div class="d-flex justify-content-between align-items-center mb-4 mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1 class="h3 mb-2 text-gray-800">Edit Sparepart</h1>
                 <nav aria-label="breadcrumb">
@@ -228,7 +228,7 @@
 
                     <hr>
 
-                    <div class="d-flex justify-content-end gap-2">
+                    <div class="d-flex justify-content-end gap-2 mt-2">
                         <a href="{{ route('admin.sparepart.index') }}" class="btn btn-secondary">
                             <i class="fas fa-times me-2"></i> Batal
                         </a>
@@ -289,11 +289,11 @@
                     if (profit >= 0) {
                         profitInfo.html(
                             `<span class="text-success">Keuntungan: Rp ${profit.toLocaleString('id-ID')} (${margin}%)</span>`
-                            );
+                        );
                     } else {
                         profitInfo.html(
                             `<span class="text-danger">Kerugian: Rp ${Math.abs(profit).toLocaleString('id-ID')} (${margin}%)</span>`
-                            );
+                        );
                     }
                 }
             }

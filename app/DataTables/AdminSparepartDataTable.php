@@ -71,7 +71,7 @@ class AdminSparepartDataTable extends DataTable
     public function html(): HtmlBuilder
     {
         return $this->builder()
-            ->setTableId('sparepart-table') // Ubah ID ini agar sesuai dengan JavaScript
+            ->setTableId('sparepart-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
             ->dom('Bfrtip')
