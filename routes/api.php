@@ -23,7 +23,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [UsersController::class, 'register']);
 Route::post('/login', [UsersController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout', [UsersController::class, 'logout']);
 
 Route::post('/midtrans/callback', [TransaksiController::class, 'midtransCallback']);
 
