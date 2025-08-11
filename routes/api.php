@@ -8,7 +8,12 @@ use App\Http\Controllers\Api\SparepartController;
 use App\Http\Controllers\Api\TransaksiController;
 use App\Http\Controllers\Api\UsersController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,6 +30,7 @@ Route::post('/register', [UsersController::class, 'register']);
 Route::post('/login', [UsersController::class, 'login']);
 
 Route::post('/midtrans/callback', [TransaksiController::class, 'midtransCallback']);
+// Route::post('transaksi/continue', [TransaksiController::class, 'continuePayment']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/kategori', [KategoriSparepartController::class, 'index']);
@@ -55,4 +61,53 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/profile', [UsersController::class, 'profile']);
 
     Route::post('/logout', [UsersController::class, 'logout']);
+});
+
+
+Route::post('/test-notification', function (Request $request) {
+    Log::info('Test Notification request received', $request->all());
+
+    $request->validate([
+        'fcm_token' => 'required|string',
+        'title' => 'nullable|string',
+        'body' => 'nullable|string',
+    ]);
+
+    $fcmToken = $request->fcm_token;
+    $title = $request->title ?? 'Test Notification';
+    $body = $request->body ?? 'Ini adalah pesan notifikasi test dari backend.';
+
+    try {
+        $factory = (new Factory)
+            ->withServiceAccount(storage_path('app/ninamotor-53934-firebase-adminsdk-fbsvc-1008728fde.json'));
+        $messaging = $factory->createMessaging();
+
+        $message = CloudMessage::withTarget('token', $fcmToken)
+            ->withNotification(Notification::create($title, $body))
+            ->withData([
+                'test_key' => 'test_value',
+            ]);
+
+        $messaging->send($message);
+
+        Log::info('Notification sent successfully to token', ['token' => $fcmToken]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification sent successfully',
+        ]);
+    } catch (\Throwable $e) {
+        Log::error('Failed to send test notification', [
+            'error' => $e->getMessage(),
+            'token' => $fcmToken,
+            'title' => $title,
+            'body' => $body,
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to send notification',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
 });

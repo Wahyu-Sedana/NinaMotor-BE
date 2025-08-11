@@ -35,5 +35,8 @@ return [
         'server_key' => env('MIDTRANS_SERVER_KEY'),
         'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
     ],
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+    ]
 
 ];

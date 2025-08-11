@@ -22,8 +22,11 @@ class Transaksi extends Model
         'total',
         'metode_pembayaran',
         'status_pembayaran',
+        'snap_token',
+        'items_data',
+        'va_number',
+        'bank'
     ];
-
     protected static function boot()
     {
         parent::boot();
