@@ -24,8 +24,6 @@ class Transaksi extends Model
         'status_pembayaran',
         'snap_token',
         'items_data',
-        'va_number',
-        'bank'
     ];
     protected static function boot()
     {
@@ -40,6 +38,6 @@ class Transaksi extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

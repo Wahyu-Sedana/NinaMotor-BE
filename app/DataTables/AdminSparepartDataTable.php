@@ -78,7 +78,7 @@ class AdminSparepartDataTable extends DataTable
             ->scrollX(true)
             ->orderBy(1)
             ->selectStyleSingle()
-            ->pageLength(25)
+            ->pageLength(10)
             ->lengthMenu([10, 25, 50, 100])
             ->buttons([
                 [

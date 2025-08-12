@@ -3,6 +3,7 @@
 namespace App\DataTables;
 
 use App\Models\Transaksi;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
@@ -16,8 +17,26 @@ class AdminTransactionDataTable extends DataTable
         return (new EloquentDataTable($query))
             ->addIndexColumn()
             ->addColumn('user_nama', function ($row) {
-                return $row->user ? $row->user->name : '-';
+                return $row->user ? $row->user->nama : '-';
             })
+            ->addColumn('items_list', function ($row) {
+                $items = json_decode($row->items_data, true);
+                if (!$items) {
+                    return '-';
+                }
+
+                $html = '<ul class="mb-0">';
+                foreach ($items as $item) {
+                    $html .= '<li>'
+                        . e($item['nama'])
+                        . ' (' . $item['quantity'] . ' x Rp ' . number_format($item['harga'], 0, ',', '.') . ')'
+                        . '</li>';
+                }
+                $html .= '</ul>';
+
+                return $html;
+            })
+
             ->addColumn('tanggal_transaksi_formatted', function ($row) {
                 return date('d/m/Y H:i', strtotime($row->tanggal_transaksi));
             })
@@ -38,15 +57,18 @@ class AdminTransactionDataTable extends DataTable
             ->addColumn('action', function ($row) {
                 return view('admin.transaksi.action', compact('row'));
             })
-            ->rawColumns(['status_badge', 'action'])
+            ->rawColumns(['status_badge', 'action', 'items_list'])
+
             ->setRowId('id');
     }
 
     public function query(Transaksi $model): QueryBuilder
     {
-        return $model->newQuery()->with('user');
+        return $model->newQuery()
+            ->leftJoin('tb_users', 'tb_transaksi.user_id', '=', 'tb_users.id')
+            ->select('tb_transaksi.*', 'tb_users.nama as user_name')
+            ->orderBy('tb_transaksi.created_at', 'desc');
     }
-
     public function html(): HtmlBuilder
     {
         return $this->builder()
@@ -56,7 +78,7 @@ class AdminTransactionDataTable extends DataTable
             ->dom('Bfrtip')
             ->orderBy(1)
             ->selectStyleSingle()
-            ->pageLength(25)
+            ->pageLength(10)
             ->lengthMenu([10, 25, 50, 100])
             ->buttons([
                 [
@@ -120,6 +142,13 @@ class AdminTransactionDataTable extends DataTable
                 ->width(150)
                 ->searchable(false)
                 ->addClass('text-center'),
+
+            Column::computed('items_list')
+                ->title('Item Transaksi')
+                ->width(250)
+                ->orderable(false)
+                ->searchable(false),
+
 
             Column::computed('action')
                 ->title('Aksi')

@@ -3,7 +3,9 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDataCustomerController;
 use App\Http\Controllers\AdminKategoriSparepartController;
+use App\Http\Controllers\AdminServisMotorController;
 use App\Http\Controllers\AdminSparepartController;
+use App\Http\Controllers\AdminTransaksiController;
 use App\Http\Controllers\AuthenticationController;
 use Illuminate\Support\Facades\Route;
 
@@ -42,4 +44,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Customer
     Route::resource('customer', AdminDataCustomerController::class);
+
+    // Transaksi
+    Route::resource('/transaksi', AdminTransaksiController::class);
+    Route::get('/transaksi/{transaksi}/items', [AdminTransaksiController::class, 'items'])
+        ->name('admin.transaksi.items');
+
+    // Servis Motor
+    Route::resource('servis', AdminServisMotorController::class);
 });

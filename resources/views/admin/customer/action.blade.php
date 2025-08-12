@@ -7,7 +7,7 @@
     @csrf
     @method('DELETE')
     <button type="submit" class="btn btn-sm btn-danger btn-delete" data-bs-toggle="tooltip" title="Hapus"
-        onclick="return confirm('Yakin ingin hapus data ini?')">
+        onclick="return">
         <i class="fas fa-trash"></i>
     </button>
 </form>

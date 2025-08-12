@@ -2,8 +2,8 @@
 
 namespace App\DataTables;
 
-use App\Models\AdminKategoriSparepart;
-use App\Models\KategoriSparepart;
+use App\Models\AdminServisMotor;
+use App\Models\ServisMotor;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
@@ -13,7 +13,7 @@ use Yajra\DataTables\Html\Editor\Editor;
 use Yajra\DataTables\Html\Editor\Fields;
 use Yajra\DataTables\Services\DataTable;
 
-class AdminKategoriSparepartDataTable extends DataTable
+class AdminServisMotorDataTable extends DataTable
 {
     /**
      * Build the DataTable class.
@@ -24,32 +24,34 @@ class AdminKategoriSparepartDataTable extends DataTable
     {
         return (new EloquentDataTable($query))
             ->addIndexColumn()
-            ->addColumn('jumlah_sparepart', function ($row) {
-                $count = $row->spareparts_count ?? $row->spareparts()->count();
-                return '<span class="badge bg-info">' . $count . ' Item</span>';
+            ->addColumn('nama_user', function ($row) {
+                return $row->user ? $row->user->nama : '-';
             })
-            ->addColumn('deskripsi_singkat', function ($row) {
-                if ($row->deskripsi) {
-                    return strlen($row->deskripsi) > 50
-                        ? substr($row->deskripsi, 0, 50) . '...'
-                        : $row->deskripsi;
-                } else {
-                    return '<span class="text-muted">-</span>';
+            ->addColumn('status_badge', function ($row) {
+                switch ($row->status) {
+                    case 'pending':
+                        return '<span class="badge bg-warning text-dark">Pending</span>';
+                    case 'proses':
+                        return '<span class="badge bg-primary">Proses</span>';
+                    case 'selesai':
+                        return '<span class="badge bg-success">Selesai</span>';
+                    default:
+                        return '<span class="badge bg-secondary">Tidak Diketahui</span>';
                 }
             })
             ->addColumn('action', function ($row) {
-                return view('admin.kategori-sparepart.action', compact('row'));
+                return view('admin.servis.action', compact('row'));
             })
-            ->rawColumns(['jumlah_sparepart', 'deskripsi_singkat', 'status_kategori', 'action'])
+            ->rawColumns(['status_badge', 'action'])
             ->setRowId('id');
     }
 
     /**
-     * Get the query source of dataTable.
+     * Query source of dataTable.
      */
-    public function query(KategoriSparepart $model): QueryBuilder
+    public function query(ServisMotor $model): QueryBuilder
     {
-        return $model->newQuery()->withCount('spareparts');
+        return $model->newQuery()->with('user');
     }
 
     /**
@@ -58,16 +60,31 @@ class AdminKategoriSparepartDataTable extends DataTable
     public function html(): HtmlBuilder
     {
         return $this->builder()
-            ->setTableId('kategori-sparepart-table')
+            ->setTableId('servismotor-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
             ->dom('Bfrtip')
-            ->scrollX(true)
             ->orderBy(1)
             ->selectStyleSingle()
             ->pageLength(10)
             ->lengthMenu([10, 25, 50, 100])
             ->buttons([
+                [
+                    'extend' => 'excel',
+                    'text' => '<i class="fas fa-file-excel"></i> Excel',
+                    'className' => 'btn btn-success btn-sm me-2',
+                    'exportOptions' => [
+                        'columns' => [0, 1, 2, 3, 4, 5, 6]
+                    ]
+                ],
+                [
+                    'extend' => 'pdf',
+                    'text' => '<i class="fas fa-file-pdf"></i> PDF',
+                    'className' => 'btn btn-danger btn-sm me-2',
+                    'exportOptions' => [
+                        'columns' => [0, 1, 2, 3, 4, 5, 6]
+                    ]
+                ],
                 [
                     'text' => '<i class="fas fa-sync-alt"></i> Reload',
                     'className' => 'btn btn-primary btn-sm',
@@ -96,19 +113,34 @@ class AdminKategoriSparepartDataTable extends DataTable
                 ->width(50)
                 ->addClass('text-center'),
 
-            Column::make('nama_kategori')
-                ->title('Nama Kategori'),
+            Column::computed('nama_user')
+                ->title('Pelanggan')
+                ->width(150),
 
-            Column::computed('deskripsi_singkat')
-                ->title('Deskripsi')
-                ->orderable(false),
+            Column::make('no_kendaraan')
+                ->title('No Kendaraan')
+                ->width(120),
 
-            Column::computed('jumlah_sparepart')
-                ->title('Jumlah Item')
+            Column::make('jenis_motor')
+                ->title('Jenis Motor')
+                ->width(120),
+
+            Column::make('keluhan')
+                ->title('Keluhan'),
+
+            Column::computed('status_badge')
+                ->title('Status')
                 ->searchable(false)
                 ->orderable(true)
-                ->width(120)
+                ->width(100)
                 ->addClass('text-center'),
+
+            Column::make('catatan_admin')
+                ->title('Catatan Admin'),
+
+            Column::make('created_at')
+                ->title('Tanggal Input')
+                ->width(150),
 
             Column::computed('action')
                 ->title('Aksi')
@@ -124,6 +156,6 @@ class AdminKategoriSparepartDataTable extends DataTable
      */
     protected function filename(): string
     {
-        return 'KategoriSparepart_' . date('YmdHis');
+        return 'ServisMotor_' . date('YmdHis');
     }
 }

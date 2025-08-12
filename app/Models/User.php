@@ -26,6 +26,7 @@ class User extends Authenticatable
         'role',
         'alamat',
         'profile',
+        'no_telp',
         'fcm_token'
     ];
 
