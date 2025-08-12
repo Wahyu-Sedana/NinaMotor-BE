@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServisMotor;
+use App\Models\User;
+use App\Notifications\NewServisNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ServisMotorController extends Controller
@@ -43,6 +46,12 @@ class ServisMotorController extends Controller
             'keluhan' => $request->keluhan,
             'status' => 'pending',
         ]);
+
+        $admin = User::where('role', 'admin')->first();
+
+        if ($admin) {
+            $admin->notify(new NewServisNotification($servis));
+        }
 
         return response()->json([
             'status' => 200,

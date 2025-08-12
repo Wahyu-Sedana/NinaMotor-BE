@@ -62,23 +62,32 @@
         </div>
 
         <a href="{{ route('admin.transaksi.index') }}"
-            class="flex items-center px-6 py-3 transition-colors
-        {{ request()->routeIs('admin.transaksi.index')
-            ? 'bg-gray-100 text-gray-900 font-medium'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+            class="flex items-center px-6 py-3 transition-colors relative
+{{ request()->routeIs('admin.transaksi.index')
+    ? 'bg-gray-100 text-gray-900 font-medium'
+    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}"
+            onclick="markServisNotificationsRead()">
             <i
                 class="fas fa-shopping-cart mr-3 {{ request()->routeIs('admin.transaksi.*') ? 'text-primary-700' : 'text-gray-600' }}"></i>
             <span>Transaksi</span>
+            <span id="transaksiNotificationCounter"
+                class="absolute top-2 right-2 inline-flex items-center justify-center h-4 w-4 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full hidden">
+                0
+            </span>
         </a>
+
 
         <a href="{{ route('admin.servis.index') }}"
             class="flex items-center px-6 py-3 transition-colors
-        {{ request()->routeIs('admin.servis.index')
-            ? 'bg-gray-100 text-gray-900 font-medium'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+{{ request()->routeIs('admin.servis.index') ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} relative"
+            onclick="markTransaksiNotificationsRead()">
             <i
                 class="fas fa-motorcycle mr-3 {{ request()->routeIs('admin.servis.*') ? 'text-primary-700' : 'text-gray-600' }}"></i>
             <span>Servis Motor</span>
+            <span id="servisNotificationCounter"
+                class="absolute top-2 right-2 inline-flex items-center justify-center h-4 w-4 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full hidden">
+                0
+            </span>
         </a>
     </nav>
 </div>

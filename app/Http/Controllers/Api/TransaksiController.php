@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Transaksi;
 use App\Models\User;
+use App\Notifications\NewServisNotification;
+use App\Notifications\NewTransactionNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -142,7 +144,7 @@ class TransaksiController extends Controller
                 $snapToken = Snap::getSnapToken($params);
             }
 
-            Transaksi::create([
+            $transaksi = Transaksi::create([
                 'id' => $tempOrderId,
                 'user_id' => $request->user_id,
                 'tanggal_transaksi' => now(),
@@ -174,6 +176,13 @@ class TransaksiController extends Controller
 
             if ($metodePembayaran !== 'cash') {
                 $responseData['snap_token'] = $snapToken;
+            }
+
+
+            $admin = User::where('role', 'admin')->first();
+
+            if ($admin) {
+                $admin->notify(new NewTransactionNotification($transaksi));
             }
 
             return response()->json($responseData, 200);

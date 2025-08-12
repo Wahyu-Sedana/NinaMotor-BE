@@ -29,6 +29,19 @@
             overflow-x: hidden;
         }
 
+        header {
+            position: relative;
+            z-index: 50;
+        }
+
+        #notifMenu {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+
         .main-content {
             margin-left: 250px;
             padding: 20px;
@@ -80,6 +93,138 @@
     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            let shownNotifIdsServis = new Set();
+            let shownNotifIdsTransaksi = new Set();
+
+            function updateTopNavCounter(totalCount) {
+                const notifCounter = $('#notifCounter');
+                if (totalCount > 0) {
+                    notifCounter.text(totalCount).removeClass('hidden');
+                } else {
+                    notifCounter.addClass('hidden');
+                }
+            }
+
+            function fetchServisNotifications() {
+                return $.ajax({
+                    url: '/admin/notifications/servis',
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(notifications) {
+                        const sidebarCounter = $('#servisNotificationCounter');
+                        if (notifications.length > 0) {
+                            sidebarCounter.text(notifications.length).removeClass('hidden');
+                        } else {
+                            sidebarCounter.addClass('hidden');
+                        }
+
+                        notifications.forEach(function(notification) {
+                            if (!shownNotifIdsServis.has(notification.id)) {
+                                Swal.fire({
+                                    toast: true,
+                                    position: 'top-end',
+                                    icon: 'info',
+                                    title: notification.data.message,
+                                    showConfirmButton: false,
+                                    timer: 5000,
+                                    timerProgressBar: true
+                                });
+                                shownNotifIdsServis.add(notification.id);
+                            }
+                        });
+                    }
+                });
+            }
+
+            function fetchTransaksiNotifications() {
+                return $.ajax({
+                    url: '/admin/notifications/transaksi',
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(notifications) {
+                        const sidebarCounter = $('#transaksiNotificationCounter');
+                        if (notifications.length > 0) {
+                            sidebarCounter.text(notifications.length).removeClass('hidden');
+                        } else {
+                            sidebarCounter.addClass('hidden');
+                        }
+
+                        notifications.forEach(function(notification) {
+                            if (!shownNotifIdsTransaksi.has(notification.id)) {
+                                Swal.fire({
+                                    toast: true,
+                                    position: 'top-end',
+                                    icon: 'success',
+                                    title: notification.data.message,
+                                    showConfirmButton: false,
+                                    timer: 5000,
+                                    timerProgressBar: true
+                                });
+                                shownNotifIdsTransaksi.add(notification.id);
+                            }
+                        });
+                    }
+                });
+            }
+
+            function fetchAllNotifications() {
+                $.when(fetchServisNotifications(), fetchTransaksiNotifications()).done(function(servisData,
+                    transaksiData) {
+                    const servisCount = servisData[0]?.length || 0;
+                    const transaksiCount = transaksiData[0]?.length || 0;
+                    updateTopNavCounter(servisCount + transaksiCount);
+                });
+            }
+
+            // Mark as read for Servis
+            window.markServisNotificationsRead = function() {
+                $('#servisNotificationCounter').addClass('hidden');
+                $.post('/admin/notifications/servis/mark-as-read', {
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                });
+                shownNotifIdsServis.clear();
+                fetchAllNotifications();
+            };
+
+            // Mark as read for Transaksi
+            window.markTransaksiNotificationsRead = function() {
+                $('#transaksiNotificationCounter').addClass('hidden');
+                $.post('/admin/notifications/transaksi/mark-as-read', {
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                });
+                shownNotifIdsTransaksi.clear();
+                fetchAllNotifications();
+            };
+
+            // Mark all as read from TopNav
+            window.markTopNavNotificationsRead = function() {
+                $('#notifCounter').addClass('hidden');
+                $.post('/admin/notifications/servis/mark-as-read', {
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                });
+                $.post('/admin/notifications/transaksi/mark-as-read', {
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                });
+                shownNotifIdsServis.clear();
+                shownNotifIdsTransaksi.clear();
+                $('#servisNotificationCounter').addClass('hidden');
+                $('#transaksiNotificationCounter').addClass('hidden');
+            };
+
+            // Fetch first time
+            fetchAllNotifications();
+
+            // Refresh every 3 seconds
+            setInterval(fetchAllNotifications, 3000);
+        });
+    </script>
 
     @stack('scripts')
 </body>
