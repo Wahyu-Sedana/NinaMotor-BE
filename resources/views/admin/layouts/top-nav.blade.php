@@ -36,19 +36,7 @@
                     <span class="hidden md:block">
                         {{ Auth::user()->nama ?? 'Guest' }}
                     </span>
-
-                    <i class="fas fa-chevron-down text-sm"></i>
                 </button>
-                <div id="profileMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden">
-                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-user mr-2"></i> Profile
-                    </a>
-                    <hr class="my-2" />
-                    <button type="button" onclick="sweetAlertLogout()"
-                        class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors w-full text-left">
-                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                    </button>
-                </div>
             </div>
 
         </div>

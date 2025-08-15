@@ -27,13 +27,16 @@ class AdminServisMotorDataTable extends DataTable
             ->addColumn('nama_user', function ($row) {
                 return $row->user ? $row->user->nama : '-';
             })
+            ->addColumn('tanggal_dibuat', function ($row) {
+                return date('d/m/Y H:i', strtotime($row->created_at));
+            })
             ->addColumn('status_badge', function ($row) {
                 switch ($row->status) {
                     case 'pending':
                         return '<span class="badge bg-warning text-dark">Pending</span>';
-                    case 'proses':
+                    case 'in_service':
                         return '<span class="badge bg-primary">Proses</span>';
-                    case 'selesai':
+                    case 'done':
                         return '<span class="badge bg-success">Selesai</span>';
                     default:
                         return '<span class="badge bg-secondary">Tidak Diketahui</span>';
@@ -138,7 +141,7 @@ class AdminServisMotorDataTable extends DataTable
             Column::make('catatan_admin')
                 ->title('Catatan Admin'),
 
-            Column::make('created_at')
+            Column::make('tanggal_dibuat')
                 ->title('Tanggal Input')
                 ->width(150),
 

@@ -50,11 +50,22 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     // Transaksi
     Route::resource('/transaksi', AdminTransaksiController::class);
-    Route::get('/transaksi/{transaksi}/items', [AdminTransaksiController::class, 'items'])
-        ->name('admin.transaksi.items');
+    Route::put('/transaksi/{transaksi}/update-status', [AdminTransaksiController::class, 'updateStatus'])->name('transaksi.update-status');
 
     // Servis Motor
-    Route::resource('servis', AdminServisMotorController::class);
+    Route::get('servis', [AdminServisMotorController::class, 'index'])->name('servis.index');
+    Route::get('servis/create', [AdminServisMotorController::class, 'create'])->name('servis.create');
+    Route::post('servis', [AdminServisMotorController::class, 'store'])->name('servis.store');
+    Route::get('servis/{servisMotor}', [AdminServisMotorController::class, 'show'])->name('servis.show');
+    Route::get('servis/{servisMotor}/edit', [AdminServisMotorController::class, 'edit'])->name('servis.edit');
+    Route::put('servis/{servisMotor}', [AdminServisMotorController::class, 'update'])->name('servis.update');
+    Route::patch('servis/{servisMotor}', [AdminServisMotorController::class, 'update'])->name('servis.patch');
+    Route::delete('servis/{servisMotor}', [AdminServisMotorController::class, 'destroy'])->name('servis.destroy');
+    Route::patch('servis/{servisMotor}/status', [AdminServisMotorController::class, 'updateStatus'])->name('servis.updateStatus');
+
+    // Profile
+    Route::get('/profile', [AdminController::class, 'editProfile'])->name('auth.profile');
+    Route::put('/profile', [AdminController::class, 'updateProfile'])->name('auth.update');
 
     // notif
     Route::get('/notifications/servis', function () {

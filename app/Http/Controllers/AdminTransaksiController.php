@@ -45,7 +45,7 @@ class AdminTransaksiController extends Controller
     public function updateStatus(Request $request, Transaksi $transaksi)
     {
         $request->validate([
-            'status_pembayaran' => 'required|in:pending,paid,failed,expired,cancelled'
+            'status_pembayaran' => 'required|in:pending,berhasil,gagal,expired,cancelled'
         ]);
 
         try {
@@ -104,7 +104,7 @@ class AdminTransaksiController extends Controller
     public function destroy(Transaksi $transaksi)
     {
         try {
-            $allowedStatuses = ['failed', 'expired', 'cancelled'];
+            $allowedStatuses = ['gagal', 'expired', 'cancelled'];
 
             if (!in_array($transaksi->status_pembayaran, $allowedStatuses)) {
                 if (request()->expectsJson()) {
@@ -157,31 +157,6 @@ class AdminTransaksiController extends Controller
 
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat menghapus data.');
-        }
-    }
-
-    public function items(Transaksi $transaksi)
-    {
-        try {
-            $itemsData = [];
-            if ($transaksi->items_data) {
-                $itemsData = json_decode($transaksi->items_data, true) ?? [];
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => $itemsData
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error fetching transaction items', [
-                'id' => $transaksi->id,
-                'error' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil data items.'
-            ], 500);
         }
     }
 }

@@ -121,7 +121,7 @@ class AdminTransactionDataTable extends DataTable
                 ->width(150),
 
             Column::computed('user_nama')
-                ->title('Nama User')
+                ->title('Nama Customer')
                 ->width(150),
 
             Column::computed('tanggal_transaksi_formatted')
@@ -142,13 +142,6 @@ class AdminTransactionDataTable extends DataTable
                 ->width(150)
                 ->searchable(false)
                 ->addClass('text-center'),
-
-            Column::computed('items_list')
-                ->title('Item Transaksi')
-                ->width(250)
-                ->orderable(false)
-                ->searchable(false),
-
 
             Column::computed('action')
                 ->title('Aksi')

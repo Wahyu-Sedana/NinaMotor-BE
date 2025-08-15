@@ -31,77 +31,6 @@
             </div>
         @endif
 
-        {{-- Statistik Cards --}}
-        <div class="row mb-4">
-            <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card border-left-primary shadow h-100 py-2">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                    Total Transaksi</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-transaksi">-</div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-receipt fa-2x text-gray-300"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card border-left-success shadow h-100 py-2">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                    Transaksi Paid</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="transaksi-paid">-</div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card border-left-warning shadow h-100 py-2">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                    Transaksi Pending</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="transaksi-pending">-</div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-clock fa-2x text-gray-300"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card border-left-info shadow h-100 py-2">
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                    Total Pendapatan</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-pendapatan">-</div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         {{-- DataTable --}}
         <div class="card shadow">
             <div class="card-header py-3">
@@ -134,8 +63,8 @@
                             <select class="form-select" id="status_pembayaran" name="status_pembayaran" required>
                                 <option value="">Pilih Status</option>
                                 <option value="pending">Pending</option>
-                                <option value="paid">Paid</option>
-                                <option value="failed">Failed</option>
+                                <option value="berhasil">Paid</option>
+                                <option value="gagal">Failed</option>
                                 <option value="expired">Expired</option>
                                 <option value="cancelled">Cancelled</option>
                             </select>
@@ -176,25 +105,34 @@
                 selector: '[data-bs-toggle="tooltip"]'
             });
 
-            // Load statistics
-            loadStatistics();
 
-            // Update Status Modal
             $(document).on('click', '.btn-update-status', function(e) {
                 e.preventDefault();
                 const transaksiId = $(this).data('id');
                 const currentStatus = $(this).data('status');
+
+                console.log('Transaksi ID:', transaksiId, 'Current Status:', currentStatus); // Debug
 
                 $('#transaksi_id').val(transaksiId);
                 $('#status_pembayaran').val(currentStatus);
                 $('#updateStatusModal').modal('show');
             });
 
-            // Handle Update Status Form
             $('#updateStatusForm').on('submit', function(e) {
                 e.preventDefault();
+
                 const transaksiId = $('#transaksi_id').val();
                 const status = $('#status_pembayaran').val();
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalText = submitBtn.html();
+
+                if (!transaksiId || !status) {
+                    Swal.fire('Error!', 'Data transaksi atau status tidak valid', 'error');
+                    return;
+                }
+
+                submitBtn.prop('disabled', true).html(
+                    '<i class="fas fa-spinner fa-spin"></i> Memperbarui...');
 
                 $.ajaxSetup({
                     headers: {
@@ -206,30 +144,55 @@
                     url: `/admin/transaksi/${transaksiId}/update-status`,
                     type: 'PUT',
                     data: {
-                        status_pembayaran: status
+                        status_pembayaran: status,
+                        _token: $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function(response) {
+                        console.log('Response:', response);
+
                         if (response.success) {
                             $('#updateStatusModal').modal('hide');
+
                             Swal.fire({
                                 title: 'Berhasil!',
-                                text: response.message,
+                                text: response.message || 'Status berhasil diperbarui',
                                 icon: 'success',
                                 timer: 2000,
                                 showConfirmButton: false
                             });
+
+                            // Reload DataTable dan statistik
                             $('#transaksi-table').DataTable().ajax.reload(null, false);
                             loadStatistics();
                         } else {
-                            Swal.fire('Gagal!', response.message, 'error');
+                            Swal.fire('Gagal!', response.message || 'Gagal memperbarui status',
+                                'error');
                         }
                     },
-                    error: function(xhr) {
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', xhr.responseText); // Debug
+
                         let msg = 'Terjadi kesalahan saat memperbarui status';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
+
+                        if (xhr.status === 404) {
+                            msg = 'Route tidak ditemukan. Periksa konfigurasi route.';
+                        } else if (xhr.status === 422) {
+                            msg = 'Data yang dikirim tidak valid';
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
                             msg = xhr.responseJSON.message;
+                        } else if (xhr.responseText) {
+                            try {
+                                const errorResponse = JSON.parse(xhr.responseText);
+                                msg = errorResponse.message || msg;
+                            } catch (e) {
+
+                            }
                         }
+
                         Swal.fire('Error!', msg, 'error');
+                    },
+                    complete: function() {
+                        submitBtn.prop('disabled', false).html(originalText);
                     }
                 });
             });
@@ -238,21 +201,88 @@
                 let items = $(this).data('items');
                 let html = '';
 
+                console.log('Items data:', items);
+
+                if (!items || items === '' || items === 'null' || items === null) {
+                    html = '<li class="list-group-item">Tidak ada data items untuk transaksi ini.</li>';
+                    $('#itemsList').html(html);
+                    $('#itemsModal').modal('show');
+                    return;
+                }
+
                 try {
-                    let parsed = JSON.parse(items);
-                    parsed.forEach(item => {
-                        html +=
-                            `<li>${item.nama} (${item.quantity} x Rp ${Number(item.harga).toLocaleString('id-ID')})</li>`;
-                    });
+                    let parsed;
+
+                    if (typeof items === 'object') {
+                        parsed = items;
+                    } else if (typeof items === 'string') {
+                        parsed = JSON.parse(items);
+                    }
+
+                    console.log('Parsed items:', parsed);
+
+                    if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
+                        html = '<li class="list-group-item">Tidak ada items dalam transaksi ini.</li>';
+                    } else {
+                        html = `
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Item</th>
+                                <th>Harga</th>
+                                <th>Qty</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+                        let total = 0;
+
+                        parsed.forEach((item, index) => {
+                            const nama = item.nama || item.name || item.item_name || item
+                                .product_name || '-';
+                            const harga = parseFloat(item.harga || item.price || item.amount || 0);
+                            const quantity = parseInt(item.quantity || item.qty || item.jumlah ||
+                                1);
+                            const subtotal = harga * quantity;
+                            total += subtotal;
+
+                            html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${nama}</td>
+                        <td>Rp ${harga.toLocaleString('id-ID')}</td>
+                        <td>${quantity}</td>
+                        <td>Rp ${subtotal.toLocaleString('id-ID')}</td>
+                    </tr>
+                `;
+                        });
+
+                        html += `
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th colspan="4" class="text-end">Total:</th>
+                                <th>Rp ${total.toLocaleString('id-ID')}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+                    }
                 } catch (e) {
-                    html = '<li>-</li>';
+                    console.error('Error parsing items:', e);
+                    console.error('Raw items data:', items);
+                    html =
+                        '<li class="list-group-item text-danger">Error: Data items tidak valid atau rusak.</li>';
                 }
 
                 $('#itemsList').html(html);
                 $('#itemsModal').modal('show');
             });
-
-
 
             // Delete Transaction
             $(document).on('click', '.btn-delete', function(e) {
@@ -290,7 +320,6 @@
                                     });
                                     $('#transaksi-table').DataTable().ajax.reload(null,
                                         false);
-                                    loadStatistics();
                                 } else {
                                     Swal.fire('Gagal!', response.message, 'error');
                                 }
@@ -310,20 +339,6 @@
             $('#transaksi-table').on('draw.dt', function() {
                 $('[data-bs-toggle="tooltip"]').tooltip();
             });
-
-            // Load Statistics Function
-            function loadStatistics() {
-                $.get('/admin/transaksi/statistics')
-                    .done(function(data) {
-                        $('#total-transaksi').text(data.total || 0);
-                        $('#transaksi-paid').text(data.paid || 0);
-                        $('#transaksi-pending').text(data.pending || 0);
-                        $('#total-pendapatan').text(data.revenue || 'Rp 0');
-                    })
-                    .fail(function() {
-                        console.log('Failed to load statistics');
-                    });
-            }
         });
     </script>
 @endpush

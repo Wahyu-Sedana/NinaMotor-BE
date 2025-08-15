@@ -69,4 +69,30 @@ class AdminController extends Controller
             'revenues'
         ));
     }
+
+    public function editProfile()
+    {
+        $title = 'Edit Profile Admin';
+        return view('admin.auth.profile', compact('title'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'password' => 'nullable|string|min:6|confirmed',
+        ]);
+
+        $user->nama = $request->nama;
+
+        if ($request->filled('password')) {
+            $user->password = bcrypt($request->password);
+        }
+
+        $user->save();
+
+        return redirect()->back()->with('success', 'Profile berhasil diperbarui');
+    }
 }
