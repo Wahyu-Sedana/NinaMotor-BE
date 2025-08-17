@@ -19,23 +19,23 @@ class AdminTransactionDataTable extends DataTable
             ->addColumn('user_nama', function ($row) {
                 return $row->user ? $row->user->nama : '-';
             })
-            ->addColumn('items_list', function ($row) {
-                $items = json_decode($row->items_data, true);
-                if (!$items) {
-                    return '-';
-                }
+            // ->addColumn('items_list', function ($row) {
+            //     $items = json_decode($row->items_data, true);
+            //     if (!$items) {
+            //         return '-';
+            //     }
 
-                $html = '<ul class="mb-0">';
-                foreach ($items as $item) {
-                    $html .= '<li>'
-                        . e($item['nama'])
-                        . ' (' . $item['quantity'] . ' x Rp ' . number_format($item['harga'], 0, ',', '.') . ')'
-                        . '</li>';
-                }
-                $html .= '</ul>';
+            //     $html = '<ul class="mb-0">';
+            //     foreach ($items as $item) {
+            //         $html .= '<li>'
+            //             . e($item['nama'])
+            //             . ' (' . $item['quantity'] . ' x Rp ' . number_format($item['harga'], 0, ',', '.') . ')'
+            //             . '</li>';
+            //     }
+            //     $html .= '</ul>';
 
-                return $html;
-            })
+            //     return $html;
+            // })
 
             ->addColumn('tanggal_transaksi_formatted', function ($row) {
                 return date('d/m/Y H:i', strtotime($row->tanggal_transaksi));

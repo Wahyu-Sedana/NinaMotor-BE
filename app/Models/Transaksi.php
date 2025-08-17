@@ -24,7 +24,18 @@ class Transaksi extends Model
         'status_pembayaran',
         'snap_token',
         'items_data',
+        'tipe_transaksi',
     ];
+
+    const STATUS_PENDING = 'pending';
+    const STATUS_PAID = 'berhasil';
+    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_FAILED = 'gagal';
+    const STATUS_EXPIRED = 'expired';
+
+    const TIPE_PRODUK = 'produk';
+    const TIPE_SERVIS = 'servis';
+
     protected static function boot()
     {
         parent::boot();
@@ -33,11 +44,20 @@ class Transaksi extends Model
             if (empty($model->{$model->getKeyName()})) {
                 $model->{$model->getKeyName()} = (string) Str::uuid();
             }
+
+            if (empty($model->tanggal_transaksi)) {
+                $model->tanggal_transaksi = now();
+            }
         });
     }
 
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function servisMotor()
+    {
+        return $this->hasOne(ServisMotor::class, 'transaksi_id', 'id');
     }
 }

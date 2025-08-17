@@ -36,6 +36,8 @@ class AdminServisMotorDataTable extends DataTable
                         return '<span class="badge bg-warning text-dark">Pending</span>';
                     case 'in_service':
                         return '<span class="badge bg-primary">Proses</span>';
+                    case 'priced':
+                        return '<span class="badge bg-info">Pembayaran</span>';
                     case 'done':
                         return '<span class="badge bg-success">Selesai</span>';
                     default:

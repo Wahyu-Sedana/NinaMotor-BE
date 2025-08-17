@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use App\DataTables\AdminServisMotorDataTable;
 use App\Models\ServisMotor;
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Midtrans\Config;
+use Illuminate\Support\Str;
 
 class AdminServisMotorController extends Controller
 {
@@ -49,7 +52,7 @@ class AdminServisMotorController extends Controller
      */
     public function edit($servi)
     {
-        $servisMotor = ServisMotor::with('user')->findOrFail($servi);
+        $servisMotor = ServisMotor::with(['user', 'transaksi'])->findOrFail($servi);
         return view('admin.servis.edit', compact('servisMotor'));
     }
 
@@ -65,8 +68,9 @@ class AdminServisMotorController extends Controller
             'no_kendaraan' => 'required|string|max:20',
             'jenis_motor' => 'required|string|max:100',
             'keluhan' => 'required|string',
-            'status' => 'required|in:pending,rejected,in_service,done',
+            'status' => 'required|in:pending,rejected,in_service,done,priced',
             'catatan_admin' => 'nullable|string',
+            'harga_servis' => 'nullable|numeric|min:0',
         ], [
             'no_kendaraan.required' => 'No kendaraan harus diisi',
             'no_kendaraan.max' => 'No kendaraan maksimal 20 karakter',
@@ -74,7 +78,9 @@ class AdminServisMotorController extends Controller
             'jenis_motor.max' => 'Jenis motor maksimal 100 karakter',
             'keluhan.required' => 'Keluhan harus diisi',
             'status.required' => 'Status harus dipilih',
-            'status.in' => 'Status tidak valid (pending, rejected, in_service, atau done)',
+            'status.in' => 'Status tidak valid',
+            'harga_servis.numeric' => 'Harga servis harus berupa angka',
+            'harga_servis.min' => 'Harga servis tidak boleh negatif',
         ]);
 
         if ($validator->fails()) {
@@ -86,20 +92,37 @@ class AdminServisMotorController extends Controller
         $oldStatus = $servisMotor->status;
         $newStatus = $request->status;
 
-        $servisMotor->update([
-            'no_kendaraan' => $request->no_kendaraan,
-            'jenis_motor' => $request->jenis_motor,
-            'keluhan' => $request->keluhan,
-            'status' => $newStatus,
-            'catatan_admin' => $request->catatan_admin,
-        ]);
+        DB::beginTransaction();
 
-        if ($oldStatus !== $newStatus) {
-            $this->sendFirebaseNotification($servisMotor, $newStatus);
+        try {
+            $servisMotor->update([
+                'no_kendaraan' => $request->no_kendaraan,
+                'jenis_motor' => $request->jenis_motor,
+                'keluhan' => $request->keluhan,
+                'status' => $newStatus,
+                'catatan_admin' => $request->catatan_admin,
+                'harga_servis' => $request->harga_servis,
+            ]);
+
+            if ($newStatus === 'priced' && $request->harga_servis && $request->harga_servis > 0) {
+                $this->createTransaksiForServis($servisMotor, $request->harga_servis);
+            }
+            if ($oldStatus !== $newStatus) {
+                $this->sendFirebaseNotification($servisMotor, $newStatus);
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.servis.index')
+                ->with('success', 'Data servis motor berhasil diperbarui');
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error updating servis motor: ' . $e->getMessage());
+
+            return redirect()->back()
+                ->with('error', 'Gagal memperbarui data servis motor')
+                ->withInput();
         }
-
-        return redirect()->route('admin.servis.index')
-            ->with('success', 'Data servis motor berhasil diperbarui');
     }
 
     /**
@@ -107,7 +130,7 @@ class AdminServisMotorController extends Controller
      */
     public function show($servi)
     {
-        $servisMotor = ServisMotor::with('user')->findOrFail($servi);
+        $servisMotor = ServisMotor::with(['user', 'transaksi'])->findOrFail($servi);
         return view('admin.servis.show', compact('servisMotor'));
     }
 
@@ -116,12 +139,26 @@ class AdminServisMotorController extends Controller
      */
     public function destroy($servi)
     {
+        DB::beginTransaction();
+
         try {
             $servisMotor = ServisMotor::findOrFail($servi);
+
+            if ($servisMotor->transaksi) {
+                $servisMotor->transaksi->update([
+                    'status_pembayaran' => Transaksi::STATUS_CANCELLED
+                ]);
+            }
+
             $servisMotor->delete();
+
+            DB::commit();
+
             return redirect()->route('admin.servis.index')
                 ->with('success', 'Data servis motor berhasil dihapus');
         } catch (\Exception $e) {
+            DB::rollback();
+
             return redirect()->route('admin.servis.index')
                 ->with('error', 'Gagal menghapus data servis motor');
         }
@@ -135,8 +172,9 @@ class AdminServisMotorController extends Controller
         $servisMotor = ServisMotor::findOrFail($servi);
 
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:pending,rejected,in_service,done',
+            'status' => 'required|in:pending,rejected,in_service,done,priced',
             'catatan_admin' => 'nullable|string',
+            'harga_servis' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -149,19 +187,86 @@ class AdminServisMotorController extends Controller
         $oldStatus = $servisMotor->status;
         $newStatus = $request->status;
 
-        $servisMotor->update([
-            'status' => $newStatus,
-            'catatan_admin' => $request->catatan_admin ?? $servisMotor->catatan_admin,
-        ]);
+        DB::beginTransaction();
 
-        if ($oldStatus !== $newStatus) {
-            $this->sendFirebaseNotification($servisMotor, $newStatus);
+        try {
+            $servisMotor->update([
+                'status' => $newStatus,
+                'catatan_admin' => $request->catatan_admin ?? $servisMotor->catatan_admin,
+                'harga_servis' => $request->harga_servis ?? $servisMotor->harga_servis,
+            ]);
+
+            if ($newStatus === 'priced' && $request->harga_servis && $request->harga_servis > 0 && !$servisMotor->hasTransaction()) {
+                $this->createTransaksiForServis($servisMotor, $request->harga_servis);
+            }
+
+            if ($oldStatus !== $newStatus) {
+                $this->sendFirebaseNotification($servisMotor, $newStatus);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status berhasil diperbarui'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error updating status: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui status'
+            ], 500);
         }
+    }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Status berhasil diperbarui'
-        ]);
+    /**
+     * Create transaction for service
+     */
+    private function createTransaksiForServis(ServisMotor $servisMotor, $harga)
+    {
+        try {
+            $itemsData = [
+                [
+                    'type' => 'servis',
+                    'id' => $servisMotor->id,
+                    'nama' => "Servis Motor - {$servisMotor->jenis_motor}",
+                    'no_kendaraan' => $servisMotor->no_kendaraan,
+                    'keluhan' => $servisMotor->keluhan,
+                    'harga' => $harga,
+                    'qty' => 1,
+                    'subtotal' => $harga
+                ]
+            ];
+
+            $tempOrderId = 'ORD-' . time() . '-' . Str::random(6);
+
+            $transaksi = Transaksi::create([
+                'id' => $tempOrderId,
+                'user_id' => $servisMotor->user_id,
+                'total' => $harga,
+                'status_pembayaran' => Transaksi::STATUS_PENDING,
+                'tipe_transaksi' => Transaksi::TIPE_SERVIS,
+                'items_data' => json_encode($itemsData),
+                'metode_pembayaran' => 'cash',
+            ]);
+
+            $servisMotor->update([
+                'transaksi_id' => $tempOrderId
+            ]);
+
+            Log::info('Transaksi servis berhasil dibuat', [
+                'servis_id' => $servisMotor->id,
+                'transaksi_id' => $tempOrderId,
+                'total' => $harga
+            ]);
+
+            return $transaksi;
+        } catch (\Exception $e) {
+            Log::error('Error creating transaksi for servis: ' . $e->getMessage());
+            throw $e;
+        }
     }
 
     /**
@@ -198,6 +303,8 @@ class AdminServisMotorController extends Controller
                     'no_kendaraan' => $servisMotor->no_kendaraan,
                     'jenis_motor' => $servisMotor->jenis_motor,
                     'catatan_admin' => $servisMotor->catatan_admin ?? '',
+                    'harga_servis' => $servisMotor->harga_servis ? (string)$servisMotor->harga_servis : '',
+                    'transaksi_id' => $servisMotor->transaksi_id ?? '',
                     'updated_at' => $servisMotor->updated_at->toISOString(),
                 ]);
 
@@ -229,6 +336,7 @@ class AdminServisMotorController extends Controller
     private function getNotificationData(string $status, ServisMotor $servisMotor): array
     {
         $kendaraan = $servisMotor->no_kendaraan;
+        $harga = $servisMotor->harga_servis ? number_format($servisMotor->harga_servis, 0, ',', '.') : '';
 
         switch ($status) {
             case 'pending':
@@ -247,6 +355,12 @@ class AdminServisMotorController extends Controller
                 return [
                     'title' => 'Servis Motor - Sedang Dikerjakan',
                     'body' => "Motor {$kendaraan} sedang dalam proses servis. Kami akan segera menginformasikan jika sudah selesai."
+                ];
+
+            case 'priced':
+                return [
+                    'title' => 'Servis Motor - Estimasi Biaya',
+                    'body' => $harga ? "Estimasi biaya servis motor {$kendaraan} adalah Rp {$harga}. Silakan lakukan pembayaran untuk melanjutkan." : "Estimasi biaya servis motor {$kendaraan} sudah tersedia. Silakan cek aplikasi untuk detailnya."
                 ];
 
             case 'done':

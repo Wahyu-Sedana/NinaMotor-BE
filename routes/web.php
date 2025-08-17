@@ -23,6 +23,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('/', function () {
+    return redirect()->route('admin.login');
+});
+
+
 // Route::get('/', [AdminController::class, 'index'])->name('admin.auth.login');
 Route::prefix('admin')->name('admin.')->middleware('guest')->group(function () {
     Route::get('/login', [AuthenticationController::class, 'showLoginForm'])->name('login');

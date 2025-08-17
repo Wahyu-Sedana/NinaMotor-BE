@@ -94,7 +94,7 @@ class TransaksiController extends Controller
             }
 
             $tempOrderId = 'ORD-' . time() . '-' . Str::random(6);
-            $metodePembayaran = $request->metode_pembayaran ?? 'midtrans';
+            $metodePembayaran = $request->metode_pembayaran ?? 'cash';
             $snapToken = null;
 
             if ($metodePembayaran !== 'cash') {
