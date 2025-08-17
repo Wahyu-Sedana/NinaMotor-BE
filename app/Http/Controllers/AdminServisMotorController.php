@@ -226,47 +226,71 @@ class AdminServisMotorController extends Controller
      */
     private function createTransaksiForServis(ServisMotor $servisMotor, $harga)
     {
-        try {
-            $itemsData = [
-                [
-                    'type' => 'servis',
-                    'id' => $servisMotor->id,
-                    'nama' => "Servis Motor - {$servisMotor->jenis_motor}",
-                    'no_kendaraan' => $servisMotor->no_kendaraan,
-                    'keluhan' => $servisMotor->keluhan,
-                    'harga' => $harga,
-                    'qty' => 1,
-                    'subtotal' => $harga
-                ]
-            ];
+        return DB::transaction(function () use ($servisMotor, $harga) {
+            try {
+                if ($servisMotor->transaksi_id) {
+                    $existingTransaksi = Transaksi::find($servisMotor->transaksi_id);
+                    if ($existingTransaksi) {
+                        Log::info('Transaksi untuk servis sudah ada', [
+                            'servis_id' => $servisMotor->id,
+                            'existing_transaksi_id' => $servisMotor->transaksi_id
+                        ]);
+                        return $existingTransaksi;
+                    }
+                }
 
-            $tempOrderId = 'ORD-' . time() . '-' . Str::random(6);
+                $itemsData = [
+                    [
+                        'type' => 'servis',
+                        'id' => $servisMotor->id,
+                        'nama' => "Servis Motor - {$servisMotor->jenis_motor}",
+                        'no_kendaraan' => $servisMotor->no_kendaraan,
+                        'keluhan' => $servisMotor->keluhan,
+                        'harga' => $harga,
+                        'qty' => 1,
+                        'subtotal' => $harga
+                    ]
+                ];
 
-            $transaksi = Transaksi::create([
-                'id' => $tempOrderId,
-                'user_id' => $servisMotor->user_id,
-                'total' => $harga,
-                'status_pembayaran' => Transaksi::STATUS_PENDING,
-                'tipe_transaksi' => Transaksi::TIPE_SERVIS,
-                'items_data' => json_encode($itemsData),
-                'metode_pembayaran' => 'cash',
-            ]);
+                $maxAttempts = 10;
+                $attempt = 0;
 
-            $servisMotor->update([
-                'transaksi_id' => $tempOrderId
-            ]);
+                do {
+                    $tempOrderId = 'ORD-' . time() . '-' . Str::random(6);
+                    $exists = Transaksi::where('id', $tempOrderId)->exists();
+                    $attempt++;
 
-            Log::info('Transaksi servis berhasil dibuat', [
-                'servis_id' => $servisMotor->id,
-                'transaksi_id' => $tempOrderId,
-                'total' => $harga
-            ]);
+                    if ($attempt >= $maxAttempts) {
+                        throw new \Exception('Gagal generate unique order ID setelah ' . $maxAttempts . ' percobaan');
+                    }
+                } while ($exists);
 
-            return $transaksi;
-        } catch (\Exception $e) {
-            Log::error('Error creating transaksi for servis: ' . $e->getMessage());
-            throw $e;
-        }
+                $transaksi = Transaksi::create([
+                    'id' => $tempOrderId,
+                    'user_id' => $servisMotor->user_id,
+                    'total' => $harga,
+                    'status_pembayaran' => Transaksi::STATUS_PENDING,
+                    'tipe_transaksi' => Transaksi::TIPE_SERVIS,
+                    'items_data' => json_encode($itemsData),
+                    'metode_pembayaran' => 'cash',
+                ]);
+
+                $servisMotor->update([
+                    'transaksi_id' => $tempOrderId
+                ]);
+
+                Log::info('Transaksi servis berhasil dibuat', [
+                    'servis_id' => $servisMotor->id,
+                    'transaksi_id' => $tempOrderId,
+                    'total' => $harga
+                ]);
+
+                return $transaksi;
+            } catch (\Exception $e) {
+                Log::error('Error creating transaksi for servis: ' . $e->getMessage());
+                throw $e;
+            }
+        });
     }
 
     /**

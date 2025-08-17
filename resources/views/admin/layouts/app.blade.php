@@ -183,7 +183,6 @@
                 });
             }
 
-            // Mark as read for Servis
             window.markServisNotificationsRead = function() {
                 $('#servisNotificationCounter').addClass('hidden');
                 $.post('/admin/notifications/servis/mark-as-read', {
@@ -193,7 +192,6 @@
                 fetchAllNotifications();
             };
 
-            // Mark as read for Transaksi
             window.markTransaksiNotificationsRead = function() {
                 $('#transaksiNotificationCounter').addClass('hidden');
                 $.post('/admin/notifications/transaksi/mark-as-read', {
@@ -203,25 +201,21 @@
                 fetchAllNotifications();
             };
 
-            // Mark all as read from TopNav
-            window.markTopNavNotificationsRead = function() {
-                $('#notifCounter').addClass('hidden');
-                $.post('/admin/notifications/servis/mark-as-read', {
-                    _token: $('meta[name="csrf-token"]').attr('content')
-                });
-                $.post('/admin/notifications/transaksi/mark-as-read', {
-                    _token: $('meta[name="csrf-token"]').attr('content')
-                });
-                shownNotifIdsServis.clear();
-                shownNotifIdsTransaksi.clear();
-                $('#servisNotificationCounter').addClass('hidden');
-                $('#transaksiNotificationCounter').addClass('hidden');
-            };
+            // window.markTopNavNotificationsRead = function() {
+            //     $('#notifCounter').addClass('hidden');
+            //     $.post('/admin/notifications/servis/mark-as-read', {
+            //         _token: $('meta[name="csrf-token"]').attr('content')
+            //     });
+            //     $.post('/admin/notifications/transaksi/mark-as-read', {
+            //         _token: $('meta[name="csrf-token"]').attr('content')
+            //     });
+            //     shownNotifIdsServis.clear();
+            //     shownNotifIdsTransaksi.clear();
+            //     $('#servisNotificationCounter').addClass('hidden');
+            //     $('#transaksiNotificationCounter').addClass('hidden');
+            // };
 
-            // Fetch first time
             fetchAllNotifications();
-
-            // Refresh every 3 seconds
             setInterval(fetchAllNotifications, 3000);
         });
     </script>

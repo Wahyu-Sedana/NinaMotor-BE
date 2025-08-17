@@ -15,7 +15,7 @@
                 </span>
             </button>
 
-            <!-- Dropdown list notifikasi -->
+            {{-- <!-- Dropdown list notifikasi -->
             <div id="notifMenu" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg py-2 hidden z-50">
                 <div id="notifList" class="max-h-60 overflow-y-auto">
                     <p class="text-gray-500 text-sm text-center py-4">No notifications</p>
@@ -25,7 +25,7 @@
                     class="block w-full text-center py-2 text-sm text-blue-600 hover:bg-gray-50">
                     Mark all as read
                 </button>
-            </div>
+            </div> --}}
 
             <div class="relative">
                 <button id="profileDropdown" class="flex items-center space-x-3 text-gray-600 hover:text-gray-900">
