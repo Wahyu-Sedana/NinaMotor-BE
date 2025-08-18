@@ -30,12 +30,10 @@ class BookmarkController extends Controller
             'sparepart_id' => $request->sparepart_id,
         ]);
 
-        return response()->json(['status' => 200, 'message' => 'Bookmark added successfully',  'data' => [
-            [
-                'user_id' => $user->id,
-                'sparepart_id' => $request->sparepart_id,
-            ]
-        ]]);
+        return response()->json([
+            'status' => 200,
+            'message' => 'Bookmark added successfully'
+        ]);
     }
 
     public function destroy(Request $request)

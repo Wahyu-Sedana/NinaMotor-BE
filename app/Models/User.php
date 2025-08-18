@@ -14,7 +14,6 @@ class User extends Authenticatable
 
     protected $table = 'tb_users';
 
-    // UUID support
     protected $keyType = 'string';
     public $incrementing = false;
 

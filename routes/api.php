@@ -49,7 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/bookmark', [BookmarkController::class, 'store']);
     Route::get('/bookmark', [BookmarkController::class, 'show']);
-    Route::delete('/bookmark/remove', [BookmarkController::class, 'destroy']);
+    Route::post('/bookmark/remove', [BookmarkController::class, 'destroy']);
 
     Route::get('/servis-motor', [ServisMotorController::class, 'index']);
     Route::post('/servis-motor', [ServisMotorController::class, 'store']);
@@ -59,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transaksi/list', [TransaksiController::class, 'getTransactionList']);
 
     Route::post('/profile', [UsersController::class, 'profile']);
+    Route::post('/profile/update', [UsersController::class, 'updateProfile']);
 
     Route::post('/logout', [UsersController::class, 'logout']);
 });

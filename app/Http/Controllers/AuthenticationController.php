@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class AuthenticationController extends Controller
@@ -57,7 +58,7 @@ class AuthenticationController extends Controller
         session(['admin_token' => $token]);
 
         $request->session()->regenerate();
-        \Log::info('Admin login successful', [
+        Log::info('Admin login successful', [
             'user_id' => $user->id,
             'email' => $user->email,
             'ip' => $request->ip(),
@@ -65,7 +66,7 @@ class AuthenticationController extends Controller
         ]);
 
         return redirect()->intended(route('admin.dashboard'))
-            ->with('success', 'Welcome back, ' . $user->name . '!');
+            ->with('success', 'Welcome back, ' . $user->nama . '!');
     }
 
     /**
@@ -75,7 +76,7 @@ class AuthenticationController extends Controller
     {
         $user = Auth::user();
         if ($user) {
-            \Log::info('Admin logout', [
+            Log::info('Admin logout', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'ip' => $request->ip(),

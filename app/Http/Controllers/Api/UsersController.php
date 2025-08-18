@@ -230,10 +230,8 @@ class UsersController extends Controller
         $validator = Validator::make($request->all(), [
             'nama'           => 'nullable|string|max:255',
             'alamat'         => 'nullable|string',
-            'no_kendaraan'   => 'nullable|string',
-            'nama_kendaraan' => 'nullable|string',
-            'image_profile'  => 'nullable|string',
-            'fcm_token'      => 'nullable|string',
+            'no_telp'        => 'nullable|string|max:13',
+            'profile'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -253,17 +251,12 @@ class UsersController extends Controller
             if ($request->has('alamat')) {
                 $user->alamat = $request->alamat;
             }
-            if ($request->has('no_kendaraan')) {
-                $user->no_kendaraan = $request->no_kendaraan;
+            if ($request->has('no_telp')) {
+                $user->no_telp = $request->no_telp;
             }
-            if ($request->has('nama_kendaraan')) {
-                $user->nama_kendaraan = $request->nama_kendaraan;
-            }
-            if ($request->has('image_profile')) {
-                $user->image_profile = $request->image_profile;
-            }
-            if ($request->has('fcm_token')) {
-                $user->fcm_token = $request->fcm_token;
+            if ($request->hasFile('profile')) {
+                $path = $request->file('profile')->store('profiles', 'public');
+                $user->profile = $path;
             }
 
             $user->save();
@@ -274,10 +267,8 @@ class UsersController extends Controller
                 'updated_fields' => array_keys($request->only([
                     'nama',
                     'alamat',
-                    'no_kendaraan',
-                    'nama_kendaraan',
-                    'image_profile',
-                    'fcm_token'
+                    'no_telp',
+                    'profile',
                 ]))
             ]);
 
