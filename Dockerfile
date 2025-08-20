@@ -1,3 +1,10 @@
+FROM node:18 AS node-build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
 FROM php:8.2-fpm
 
 RUN apt-get update && apt-get install -y \
@@ -16,6 +23,8 @@ COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 
 COPY . /var/www
+
+COPY --from=node-build /app/public/build /var/www/public/build
 
 RUN chown -R www-data:www-data /var/www \
     && chmod -R 755 /var/www/storage
