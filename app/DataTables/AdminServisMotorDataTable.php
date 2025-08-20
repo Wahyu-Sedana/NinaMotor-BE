@@ -4,6 +4,7 @@ namespace App\DataTables;
 
 use App\Models\AdminServisMotor;
 use App\Models\ServisMotor;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
@@ -28,8 +29,12 @@ class AdminServisMotorDataTable extends DataTable
                 return $row->user ? $row->user->nama : '-';
             })
             ->addColumn('tanggal_dibuat', function ($row) {
-                return date('d/m/Y H:i', strtotime($row->created_at));
+                return Carbon::parse($row->created_at)
+                    ->locale('id')
+                    ->settings(['formatFunction' => 'translatedFormat'])
+                    ->translatedFormat('d F Y H:i');
             })
+
             ->addColumn('status_badge', function ($row) {
                 switch ($row->status) {
                     case 'pending':

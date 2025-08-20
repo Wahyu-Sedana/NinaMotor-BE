@@ -4,6 +4,7 @@ namespace App\DataTables;
 
 use App\Models\Transaksi;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder as QueryBuilder;
 use Yajra\DataTables\EloquentDataTable;
 use Yajra\DataTables\Html\Builder as HtmlBuilder;
@@ -38,7 +39,10 @@ class AdminTransactionDataTable extends DataTable
             // })
 
             ->addColumn('tanggal_transaksi_formatted', function ($row) {
-                return date('d/m/Y H:i', strtotime($row->tanggal_transaksi));
+                return Carbon::parse($row->tanggal_transaksi)
+                    ->locale('id')
+                    ->settings(['formatFunction' => 'translatedFormat'])
+                    ->translatedFormat('d F Y H:i');
             })
             ->addColumn('total_formatted', function ($row) {
                 return 'Rp ' . number_format($row->total, 0, ',', '.');

@@ -30,12 +30,12 @@ Route::post('/register', [UsersController::class, 'register']);
 Route::post('/login', [UsersController::class, 'login']);
 
 Route::post('/midtrans/callback', [TransaksiController::class, 'midtransCallback']);
+Route::get('/sparepart', [SparepartController::class, 'index']);
 // Route::post('transaksi/continue', [TransaksiController::class, 'continuePayment']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/kategori', [KategoriSparepartController::class, 'index']);
 
-    Route::get('/sparepart', [SparepartController::class, 'index']);
     Route::get('/sparepart/{id}', [SparepartController::class, 'show']);
     Route::post('/sparepart', [SparepartController::class, 'store']);
     Route::put('/sparepart/{id}', [SparepartController::class, 'update']);
