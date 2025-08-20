@@ -10,6 +10,8 @@ services:
             - ./:/var/www
         expose:
             - "9000"
+        ports:
+            - "9000:9000"
         environment:
             - DB_HOST=db
             - DB_DATABASE=db_ninamotor
