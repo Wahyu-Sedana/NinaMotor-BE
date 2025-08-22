@@ -15,6 +15,9 @@ class AdminTransaksiController extends Controller
      */
     public function index(AdminTransactionDataTable $dataTable)
     {
+        if (request()->ajax()) {
+            return $dataTable->ajax();
+        }
         return $dataTable->render('admin.transaksi.index', [
             'title' => 'Transaksi'
         ]);
