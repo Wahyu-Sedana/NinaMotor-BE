@@ -30,7 +30,6 @@ export default defineConfig(({ command, mode }) => {
             },
         },
 
-        base: command === "serve" ? "" : "/build/",
         define: {
             __APP_ENV__: JSON.stringify(env.APP_ENV),
             __APP_URL__: JSON.stringify(env.APP_URL),
