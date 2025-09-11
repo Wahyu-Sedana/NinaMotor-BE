@@ -73,57 +73,57 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/profile', [AdminController::class, 'updateProfile'])->name('auth.update');
 
     // notif
-    Route::get('/notifications/servis', function () {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
-            return response()->json([], 403);
-        }
+    // Route::get('/notifications/servis', function () {
+    //     if (!auth()->check() || auth()->user()->role !== 'admin') {
+    //         return response()->json([], 403);
+    //     }
 
-        $notifications = auth()->user()->unreadNotifications
-            ->where('type', NewServisNotification::class)
-            ->values();
+    //     $notifications = auth()->user()->unreadNotifications
+    //         ->where('type', NewServisNotification::class)
+    //         ->values();
 
-        return response()->json($notifications);
-    });
-    Route::post('/notifications/servis/mark-as-read', function () {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
-            return response()->json([], 403);
-        }
+    //     return response()->json($notifications);
+    // });
+    // Route::post('/notifications/servis/mark-as-read', function () {
+    //     if (!auth()->check() || auth()->user()->role !== 'admin') {
+    //         return response()->json([], 403);
+    //     }
 
-        auth()->user()->unreadNotifications
-            ->where('type', NewServisNotification::class)
-            ->markAsRead();
+    //     auth()->user()->unreadNotifications
+    //         ->where('type', NewServisNotification::class)
+    //         ->markAsRead();
 
-        return response()->json(['message' => 'Notifikasi Servis ditandai sudah dibaca.']);
-    });
+    //     return response()->json(['message' => 'Notifikasi Servis ditandai sudah dibaca.']);
+    // });
 
-    Route::get('/notifications/transaksi', function () {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
-            return response()->json([], 403);
-        }
+    // Route::get('/notifications/transaksi', function () {
+    //     if (!auth()->check() || auth()->user()->role !== 'admin') {
+    //         return response()->json([], 403);
+    //     }
 
-        $notifications = auth()->user()->unreadNotifications
-            ->where('type', NewTransactionNotification::class)
-            ->values();
+    //     $notifications = auth()->user()->unreadNotifications
+    //         ->where('type', NewTransactionNotification::class)
+    //         ->values();
 
-        return response()->json($notifications);
-    });
-    Route::post('/notifications/transaksi/mark-as-read', function () {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
-            return response()->json([], 403);
-        }
+    //     return response()->json($notifications);
+    // });
+    // Route::post('/notifications/transaksi/mark-as-read', function () {
+    //     if (!auth()->check() || auth()->user()->role !== 'admin') {
+    //         return response()->json([], 403);
+    //     }
 
-        auth()->user()->unreadNotifications
-            ->where('type', NewTransactionNotification::class)
-            ->markAsRead();
+    //     auth()->user()->unreadNotifications
+    //         ->where('type', NewTransactionNotification::class)
+    //         ->markAsRead();
 
-        return response()->json(['message' => 'Notifikasi Transaksi ditandai sudah dibaca.']);
-    });
-    Route::get('/notifications/all', function () {
-        $servis = auth()->user()->unreadNotifications->where('type', NewServisNotification::class)->get();
-        $transaksi = auth()->user()->unreadNotifications->where('type', NewTransactionNotification::class)->get();
+    //     return response()->json(['message' => 'Notifikasi Transaksi ditandai sudah dibaca.']);
+    // });
+    // Route::get('/notifications/all', function () {
+    //     $servis = auth()->user()->unreadNotifications->where('type', NewServisNotification::class)->get();
+    //     $transaksi = auth()->user()->unreadNotifications->where('type', NewTransactionNotification::class)->get();
 
-        $all = $servis->merge($transaksi)->sortByDesc('created_at')->values();
+    //     $all = $servis->merge($transaksi)->sortByDesc('created_at')->values();
 
-        return response()->json($all->values()->all());
-    });
+    //     return response()->json($all->values()->all());
+    // });
 });
