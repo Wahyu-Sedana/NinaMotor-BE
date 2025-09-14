@@ -2,16 +2,25 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\AdminNotificationController;
 use App\Http\Controllers\Controller;
 use App\Models\ServisMotor;
 use App\Models\User;
 use App\Notifications\NewServisNotification;
+use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ServisMotorController extends Controller
 {
+    private $adminNotification;
+
+    public function __construct()
+    {
+        $this->adminNotification = new FirebaseService();
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -52,6 +61,12 @@ class ServisMotorController extends Controller
         if ($admin) {
             $admin->notify(new NewServisNotification($servis));
         }
+
+        $this->adminNotification->sendNotificationToAdmin(
+            'Pengajuan Servis Baru',
+            'Motor ' . $servis->no_kendaraan . ' dengan keluhan: ' . $servis->keluhan,
+            ['servis_id' => $servis->id]
+        );
 
         return response()->json([
             'status' => 200,

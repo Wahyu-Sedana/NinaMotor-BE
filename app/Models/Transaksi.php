@@ -24,7 +24,6 @@ class Transaksi extends Model
         'status_pembayaran',
         'snap_token',
         'items_data',
-        'tipe_transaksi',
     ];
 
     const STATUS_PENDING = 'pending';
@@ -32,9 +31,6 @@ class Transaksi extends Model
     const STATUS_CANCELLED = 'cancelled';
     const STATUS_FAILED = 'gagal';
     const STATUS_EXPIRED = 'expired';
-
-    const TIPE_PRODUK = 'produk';
-    const TIPE_SERVIS = 'servis';
 
     protected static function boot()
     {

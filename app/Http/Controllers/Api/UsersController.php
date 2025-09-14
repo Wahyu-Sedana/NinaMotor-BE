@@ -19,9 +19,7 @@ class UsersController extends Controller
             'password'       => 'required|string|min:6|confirmed',
             'role'           => 'nullable|string',
             'alamat'         => 'nullable|string',
-            'no_kendaraan'   => 'nullable|string',
-            'nama_kendaraan' => 'nullable|string',
-            'image_profile'  => 'nullable|string',
+            'no_telp'  => 'nullable|string',
             'fcm_token'      => 'nullable|string',
         ]);
 
@@ -40,9 +38,7 @@ class UsersController extends Controller
                 'password'       => Hash::make($request->password),
                 'role'           => $request->role ?? 'customer',
                 'alamat'         => $request->alamat,
-                'no_kendaraan'   => $request->no_kendaraan,
-                'nama_kendaraan' => $request->nama_kendaraan,
-                'image_profile'  => $request->image_profile,
+                'no_telp'  => $request->image_profile,
                 'fcm_token'      => $request->fcm_token,
             ]);
 
@@ -152,7 +148,6 @@ class UsersController extends Controller
         try {
             $user = $request->user();
 
-            // Clear FCM token on logout for security
             $user->fcm_token = null;
             $user->save();
 

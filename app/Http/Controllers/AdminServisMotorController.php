@@ -48,7 +48,6 @@ class AdminServisMotorController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     * Parameter name harus sesuai dengan route: {servi}
      */
     public function edit($servi)
     {
@@ -58,7 +57,6 @@ class AdminServisMotorController extends Controller
 
     /**
      * Update the specified service in storage.
-     * Parameter name harus sesuai dengan route: {servi}
      */
     public function update(Request $request, $servi)
     {
@@ -270,7 +268,6 @@ class AdminServisMotorController extends Controller
                     'user_id' => $servisMotor->user_id,
                     'total' => $harga,
                     'status_pembayaran' => Transaksi::STATUS_PENDING,
-                    'tipe_transaksi' => Transaksi::TIPE_SERVIS,
                     'items_data' => json_encode($itemsData),
                     'metode_pembayaran' => 'cash',
                 ]);

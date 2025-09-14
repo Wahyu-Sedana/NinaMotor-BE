@@ -10,6 +10,7 @@
         "kreait/firebase-php": "^7.21",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
+        "laravel/telescope": "^5.11",
         "laravel/tinker": "^2.8",
         "midtrans/midtrans-php": "^2.6",
         "yajra/laravel-datatables-buttons": "^10.0",
