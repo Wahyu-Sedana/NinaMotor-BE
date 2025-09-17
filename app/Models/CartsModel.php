@@ -19,7 +19,6 @@ class CartsModel extends Model
     protected $fillable = [
         'id',
         'user_id',
-        'session_token',
         'items',
     ];
 

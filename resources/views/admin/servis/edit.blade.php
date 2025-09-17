@@ -218,16 +218,6 @@
                         </div>
                     </div>
 
-                    {{-- Catatan Admin --}}
-                    <div class="mb-3">
-                        <label for="catatan_admin" class="form-label">Catatan Admin</label>
-                        <textarea class="form-control @error('catatan_admin') is-invalid @enderror" id="catatan_admin" name="catatan_admin"
-                            rows="4" placeholder="Tambahkan catatan atau keterangan tambahan dari admin">{{ old('catatan_admin', $servisMotor->catatan_admin) }}</textarea>
-                        @error('catatan_admin')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
                     <hr>
 
                     {{-- Info Tambahan --}}

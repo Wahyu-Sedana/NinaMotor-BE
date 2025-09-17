@@ -17,7 +17,6 @@ class ServisMotor extends Model
         'jenis_motor',
         'keluhan',
         'status',
-        'catatan_admin',
         'harga_servis',
         'transaksi_id',
     ];

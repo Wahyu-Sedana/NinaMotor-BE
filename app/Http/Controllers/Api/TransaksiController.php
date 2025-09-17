@@ -153,8 +153,6 @@ class TransaksiController extends Controller
                 'status_pembayaran' => 'pending',
                 'snap_token' => $snapToken,
                 'items_data' => json_encode($request->cart_items),
-                'va_number' => null,
-                'bank' => null,
             ]);
 
             DB::commit();

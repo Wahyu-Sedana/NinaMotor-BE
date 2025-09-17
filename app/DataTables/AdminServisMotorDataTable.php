@@ -145,8 +145,6 @@ class AdminServisMotorDataTable extends DataTable
                 ->width(100)
                 ->addClass('text-center'),
 
-            Column::make('catatan_admin')
-                ->title('Catatan Admin'),
 
             Column::make('tanggal_dibuat')
                 ->title('Tanggal Input')

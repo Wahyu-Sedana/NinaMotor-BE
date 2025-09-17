@@ -67,7 +67,6 @@ class AdminServisMotorController extends Controller
             'jenis_motor' => 'required|string|max:100',
             'keluhan' => 'required|string',
             'status' => 'required|in:pending,rejected,in_service,done,priced',
-            'catatan_admin' => 'nullable|string',
             'harga_servis' => 'nullable|numeric|min:0',
         ], [
             'no_kendaraan.required' => 'No kendaraan harus diisi',
@@ -98,7 +97,7 @@ class AdminServisMotorController extends Controller
                 'jenis_motor' => $request->jenis_motor,
                 'keluhan' => $request->keluhan,
                 'status' => $newStatus,
-                'catatan_admin' => $request->catatan_admin,
+
                 'harga_servis' => $request->harga_servis,
             ]);
 
@@ -171,7 +170,6 @@ class AdminServisMotorController extends Controller
 
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:pending,rejected,in_service,done,priced',
-            'catatan_admin' => 'nullable|string',
             'harga_servis' => 'nullable|numeric|min:0',
         ]);
 
@@ -190,7 +188,6 @@ class AdminServisMotorController extends Controller
         try {
             $servisMotor->update([
                 'status' => $newStatus,
-                'catatan_admin' => $request->catatan_admin ?? $servisMotor->catatan_admin,
                 'harga_servis' => $request->harga_servis ?? $servisMotor->harga_servis,
             ]);
 
@@ -323,7 +320,6 @@ class AdminServisMotorController extends Controller
                     'status' => $newStatus,
                     'no_kendaraan' => $servisMotor->no_kendaraan,
                     'jenis_motor' => $servisMotor->jenis_motor,
-                    'catatan_admin' => $servisMotor->catatan_admin ?? '',
                     'harga_servis' => $servisMotor->harga_servis ? (string)$servisMotor->harga_servis : '',
                     'transaksi_id' => $servisMotor->transaksi_id ?? '',
                     'updated_at' => $servisMotor->updated_at->toISOString(),

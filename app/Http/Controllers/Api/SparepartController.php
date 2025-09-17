@@ -54,7 +54,8 @@ class SparepartController extends Controller
         if ($spareparts->isEmpty()) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Tidak ada sparepart ditemukan untuk kategori: ' . $namaKategori
+                'message' => 'Tidak ada sparepart ditemukan untuk kategori: ' . $namaKategori,
+                'data' => []
             ], 200);
         }
 
