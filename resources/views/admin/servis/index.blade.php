@@ -30,14 +30,54 @@
             </div>
         @endif
 
-        {{-- TABEL --}}
+        {{-- FILTER & EXPORT --}}
         <div class="card shadow">
-            <div class="card-header py-3">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h6 class="m-0 font-weight-bold text-primary">Data Servis Motor</h6>
+                <div class="d-flex gap-2">
+                    {{-- Filter Tahun --}}
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="filter-tahun" class="mb-0 small">Tahun:</label>
+                        <select id="filter-tahun" class="form-select form-select-sm" style="width: 100px;">
+                            <option value="">Semua</option>
+                            @for ($y = now()->year; $y >= 2020; $y--)
+                                <option value="{{ $y }}">{{ $y }}</option>
+                            @endfor
+                        </select>
+                    </div>
+
+                    {{-- Filter Bulan --}}
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="filter-bulan" class="mb-0 small">Bulan:</label>
+                        <select id="filter-bulan" class="form-select form-select-sm" style="width: 120px;">
+                            <option value="">Semua</option>
+                            @for ($m = 1; $m <= 12; $m++)
+                                <option value="{{ $m }}">
+                                    {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                                </option>
+                            @endfor
+                        </select>
+                    </div>
+
+                    {{-- Filter Search --}}
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="filter-search" class="mb-0 small">Cari:</label>
+                        <input type="text" id="filter-search" class="form-control form-control-sm"
+                            placeholder="Nama User / Nomor Kendaraan" style="width: 200px;">
+                    </div>
+
+                    {{-- Tombol Export --}}
+                    <a id="export-excel" href="#" class="btn btn-success btn-sm text-white">
+                        <i class="fas fa-file-excel"></i> Export Excel
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <div style="overflow-x: auto;">
-                    {!! $dataTable->table(['class' => 'table table-bordered table-striped nowrap w-100'], true) !!}
+                    {!! $dataTable->table(
+                        ['class' => 'table table-bordered table-striped nowrap w-100', 'id' => 'servismotor-table'],
+                        true,
+                    ) !!}
                 </div>
             </div>
         </div>
@@ -49,10 +89,41 @@
 
     <script>
         $(document).ready(function() {
-            $('body').tooltip({
-                selector: '[data-bs-toggle="tooltip"]'
+            const table = $('#servismotor-table').DataTable();
+
+            // Kirim filter ke ajax
+            $('#servismotor-table').on('preXhr.dt', function(e, settings, data) {
+                data.tahun = $('#filter-tahun').val();
+                data.bulan = $('#filter-bulan').val();
+                data.search_custom = $('#filter-search').val();
             });
 
+            // Reload tabel saat filter tahun/bulan berubah
+            $('#filter-tahun, #filter-bulan').on('change', function() {
+                table.ajax.reload();
+            });
+
+            // Search dengan delay 500ms
+            let searchTimeout;
+            $('#filter-search').on('keyup', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    table.ajax.reload();
+                }, 500);
+            });
+
+            // Export Excel
+            $('#export-excel').on('click', function(e) {
+                e.preventDefault();
+                let tahun = $('#filter-tahun').val();
+                let bulan = $('#filter-bulan').val();
+                let search = $('#filter-search').val();
+                let url = "{{ route('admin.servis.export.excel') }}?tahun=" + tahun + "&bulan=" + bulan +
+                    "&search=" + search;
+                window.location.href = url;
+            });
+
+            // Delete handler
             $(document).on('click', '.btn-delete', function(e) {
                 e.preventDefault();
                 const url = $(this).data('url');
@@ -67,7 +138,6 @@
                     cancelButtonColor: '#6c757d',
                     confirmButtonText: '<i class="fas fa-trash"></i> Ya, Hapus!',
                     cancelButtonText: '<i class="fas fa-times"></i> Batal',
-                    buttonsStyling: true
                 }).then((result) => {
                     if (result.isConfirmed) {
                         Swal.fire({
@@ -100,36 +170,31 @@
                                         timer: 2000,
                                         showConfirmButton: false
                                     });
-                                    $('#servismotor-table').DataTable().ajax.reload(
-                                        null, false);
+                                    table.ajax.reload(null, false);
                                 } else {
                                     Swal.fire({
                                         title: 'Gagal!',
                                         text: response.message ||
-                                            'Terjadi kesalahan saat menghapus data',
+                                            'Terjadi kesalahan',
                                         icon: 'error'
                                     });
                                 }
                             },
                             error: function(xhr) {
                                 let message = 'Terjadi kesalahan saat menghapus data';
-                                if (xhr.responseJSON && xhr.responseJSON.message) {
-                                    message = xhr.responseJSON.message;
-                                } else if (xhr.status === 404) {
-                                    message = 'Data tidak ditemukan';
-                                } else if (xhr.status === 403) {
-                                    message =
-                                        'Anda tidak memiliki akses untuk menghapus data ini';
-                                } else if (xhr.status === 500) {
-                                    message =
-                                        'Terjadi kesalahan server. Silakan coba lagi.';
-                                }
+                                if (xhr.responseJSON?.message) message = xhr
+                                    .responseJSON.message;
+                                else if (xhr.status === 404) message =
+                                    'Data tidak ditemukan';
+                                else if (xhr.status === 403) message =
+                                    'Anda tidak memiliki akses';
+                                else if (xhr.status === 500) message =
+                                    'Kesalahan server';
 
                                 Swal.fire({
                                     title: 'Error!',
                                     text: message,
-                                    icon: 'error',
-                                    confirmButtonText: 'OK'
+                                    icon: 'error'
                                 });
                             }
                         });
@@ -137,6 +202,7 @@
                 });
             });
 
+            // Tooltip refresh setiap draw
             $('#servismotor-table').on('draw.dt', function() {
                 $('[data-bs-toggle="tooltip"]').tooltip();
             });

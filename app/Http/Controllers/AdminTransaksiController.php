@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\DataTables\AdminTransactionDataTable;
+use App\Exports\TransaksiExport;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminTransaksiController extends Controller
 {
@@ -161,5 +163,16 @@ class AdminTransaksiController extends Controller
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat menghapus data.');
         }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $tahun = $request->get('tahun', now()->year);
+        $bulan = $request->get('bulan');
+        $search = $request->get('search');
+        $tanggal = now()->format('Y-m-d_H-i-s');
+
+        $filename = "Laporan_Transaksi_{$tanggal}.xlsx";
+        return Excel::download(new TransaksiExport($tahun,  $bulan, $search), $filename);
     }
 }

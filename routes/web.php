@@ -56,6 +56,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     // Transaksi
     Route::resource('/transaksi', AdminTransaksiController::class);
     Route::put('/transaksi/{transaksi}/update-status', [AdminTransaksiController::class, 'updateStatus'])->name('transaksi.update-status');
+    Route::get('/transaksi/export/excel', [AdminTransaksiController::class, 'exportExcel'])->name('transaksi.export.excel');
 
     // Servis Motor
     Route::get('servis', [AdminServisMotorController::class, 'index'])->name('servis.index');
@@ -67,6 +68,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::patch('servis/{servisMotor}', [AdminServisMotorController::class, 'update'])->name('servis.patch');
     Route::delete('servis/{servisMotor}', [AdminServisMotorController::class, 'destroy'])->name('servis.destroy');
     Route::patch('servis/{servisMotor}/status', [AdminServisMotorController::class, 'updateStatus'])->name('servis.updateStatus');
+    Route::get('/servis/export/excel', [AdminServisMotorController::class, 'exportExcel'])->name('servis.export.excel');
 
     // Profile
     Route::get('/profile', [AdminController::class, 'editProfile'])->name('auth.profile');

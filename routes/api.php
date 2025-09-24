@@ -31,16 +31,19 @@ Route::post('/login', [UsersController::class, 'login']);
 
 Route::post('/midtrans/callback', [TransaksiController::class, 'midtransCallback']);
 Route::get('/sparepart', [SparepartController::class, 'index']);
+Route::post('/check-email', [UsersController::class, 'checkUserByEmail']);
+Route::post('/reset-password', [UsersController::class, 'resetPassword']);
+Route::post('/sparepart/kategori', [SparepartController::class, 'showDataByKategori']);
+Route::get('/kategori', [KategoriSparepartController::class, 'index']);
+
+Route::get('/sparepart/{id}', [SparepartController::class, 'show']);
 // Route::post('transaksi/continue', [TransaksiController::class, 'continuePayment']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/kategori', [KategoriSparepartController::class, 'index']);
-
-    Route::get('/sparepart/{id}', [SparepartController::class, 'show']);
     Route::post('/sparepart', [SparepartController::class, 'store']);
     Route::put('/sparepart/{id}', [SparepartController::class, 'update']);
     Route::delete('/sparepart/{id}', [SparepartController::class, 'destroy']);
-    Route::post('/sparepart/kategori', [SparepartController::class, 'showDataByKategori']);
+
 
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart', [CartController::class, 'store']);

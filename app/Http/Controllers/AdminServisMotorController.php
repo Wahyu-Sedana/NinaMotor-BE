@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\DataTables\AdminServisMotorDataTable;
+use App\Exports\ServisMotorExport;
 use App\Models\ServisMotor;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Midtrans\Config;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminServisMotorController extends Controller
 {
@@ -392,5 +394,16 @@ class AdminServisMotorController extends Controller
                     'body' => "Status servis motor {$kendaraan} telah diperbarui."
                 ];
         }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $tahun = $request->get('tahun', now()->year);
+        $bulan = $request->get('bulan');
+        $search = $request->get('search');
+        $tanggal = now()->format('Y-m-d_H-i-s');
+
+        $filename = "Laporan_Servis_Motor_{$tanggal}.xlsx";
+        return Excel::download(new ServisMotorExport($tahun,  $bulan, $search), $filename);
     }
 }

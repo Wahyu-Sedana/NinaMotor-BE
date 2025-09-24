@@ -66,22 +66,6 @@ class AdminDataCustomerDataTable extends DataTable
             ->lengthMenu([10, 25, 50, 100])
             ->buttons([
                 [
-                    'extend' => 'excel',
-                    'text' => '<i class="fas fa-file-excel"></i> Excel',
-                    'className' => 'btn btn-success btn-sm me-2',
-                    'exportOptions' => [
-                        'columns' => [0, 1, 2, 3, 4, 5, 6, 7]
-                    ]
-                ],
-                [
-                    'extend' => 'pdf',
-                    'text' => '<i class="fas fa-file-pdf"></i> PDF',
-                    'className' => 'btn btn-danger btn-sm me-2',
-                    'exportOptions' => [
-                        'columns' => [0, 1, 2, 3, 4, 5, 6, 7]
-                    ]
-                ],
-                [
                     'text' => '<i class="fas fa-sync-alt"></i> Reload',
                     'className' => 'btn btn-primary btn-sm',
                     'action' => 'function ( e, dt, node, config ) { dt.ajax.reload(); }',

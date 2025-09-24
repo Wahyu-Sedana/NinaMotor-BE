@@ -224,8 +224,8 @@ class TransaksiController extends Controller
                     break;
                 case 'deny':
                 case 'cancel':
-                case 'expire':
-                    $transaksi->status_pembayaran = $notif->transaction_status == 'expire' ? 'expired' : 'gagal';
+                case 'expired':
+                    $transaksi->status_pembayaran = 'expired';
                     break;
             }
 

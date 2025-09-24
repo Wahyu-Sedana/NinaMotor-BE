@@ -53,7 +53,7 @@ class AdminTransactionDataTable extends DataTable
                 } elseif ($row->status_pembayaran === 'pending') {
                     return '<span class="badge bg-warning text-dark">Pending</span>';
                 } elseif ($row->status_pembayaran === 'expired') {
-                    return '<span class="badge bg-red text-dark">Expired</span>';
+                    return '<span class="badge bg-danger text-white">Expired</span>';
                 } else {
                     return '<span class="badge bg-danger">Gagal</span>';
                 }
@@ -68,46 +68,37 @@ class AdminTransactionDataTable extends DataTable
 
     public function query(Transaksi $model): QueryBuilder
     {
-        return $model->newQuery()
+        $query = $model->newQuery()
             ->leftJoin('tb_users', 'tb_transaksi.user_id', '=', 'tb_users.id')
             ->select('tb_transaksi.*', 'tb_users.nama as user_name')
             ->orderBy('tb_transaksi.created_at', 'desc');
+
+        if ($tahun = request('tahun')) {
+            $query->whereYear('tb_transaksi.tanggal_transaksi', $tahun);
+        }
+
+        if ($bulan = request('bulan')) {
+            $query->whereMonth('tb_transaksi.tanggal_transaksi', $bulan);
+        }
+        if ($search = request('search_custom')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('tb_users.nama', 'like', "%{$search}%")
+                    ->orWhere('tb_transaksi.metode_pembayaran', 'like', "%{$search}%");
+            });
+        }
+
+        return $query;
     }
+
     public function html(): HtmlBuilder
     {
         return $this->builder()
             ->setTableId('admintransaction-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->dom('Bfrtip')
-            ->orderBy(1)
-            ->selectStyleSingle()
-            ->pageLength(10)
-            ->lengthMenu([10, 25, 50, 100])
-            ->buttons([
-                [
-                    'extend' => 'excel',
-                    'text' => '<i class="fas fa-file-excel"></i> Excel',
-                    'className' => 'btn btn-success btn-sm me-2',
-                    'exportOptions' => ['columns' => [0, 1, 2, 3, 4, 5, 6]]
-                ],
-                [
-                    'extend' => 'pdf',
-                    'text' => '<i class="fas fa-file-pdf"></i> PDF',
-                    'className' => 'btn btn-danger btn-sm me-2',
-                    'exportOptions' => ['columns' => [0, 1, 2, 3, 4, 5, 6]]
-                ],
-                [
-                    'text' => '<i class="fas fa-sync-alt"></i> Reload',
-                    'className' => 'btn btn-primary btn-sm',
-                    'action' => 'function ( e, dt, node, config ) { dt.ajax.reload(); }',
-                ],
-            ])
-            ->parameters([
-                'responsive' => true,
-                'autoWidth' => false,
-                'language' => ['url' => '//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json']
-            ]);
+            ->dom('t<"d-flex justify-content-between align-items-center"lip>')
+            ->scrollX(true)
+            ->orderBy(1);
     }
 
     public function getColumns(): array
