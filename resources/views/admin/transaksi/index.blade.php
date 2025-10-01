@@ -35,7 +35,7 @@
         <div class="card shadow">
             <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h6 class="m-0 font-weight-bold text-primary">Data Transaksi</h6>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap">
                     {{-- Filter Tahun --}}
                     <div class="d-flex align-items-center gap-2">
                         <label for="filter-tahun" class="mb-0 small">Tahun:</label>
@@ -51,6 +51,19 @@
                                 <option value="{{ $m }}">
                                     {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}</option>
                             @endfor
+                        </select>
+                    </div>
+
+                    {{-- Filter Status --}}
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="filter-status" class="mb-0 small">Status:</label>
+                        <select id="filter-status" class="form-select form-select-sm" style="width: 130px;">
+                            <option value="">Semua Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="berhasil">Berhasil</option>
+                            <option value="gagal">Gagal</option>
+                            <option value="expired">Expired</option>
+                            <option value="cancelled">Cancelled</option>
                         </select>
                     </div>
 
@@ -138,21 +151,22 @@
                 const table = window.LaravelDataTables['transaksi-table'];
                 const currentYear = new Date().getFullYear();
 
-
+                // Populate tahun filter
                 for (let y = currentYear; y >= 2020; y--) {
                     $('#filter-tahun').append(`<option value="${y}">${y}</option>`);
                 }
                 $('#filter-tahun').val(currentYear);
 
-
+                // Send filter data to server
                 table.on('preXhr.dt', function(e, settings, data) {
                     data.tahun = $('#filter-tahun').val();
                     data.bulan = $('#filter-bulan').val();
+                    data.status = $('#filter-status').val();
                     data.search_custom = $('#filter-search').val();
                 });
 
-
-                $('#filter-tahun, #filter-bulan').on('change', function() {
+                // Reload table on filter change
+                $('#filter-tahun, #filter-bulan, #filter-status').on('change', function() {
                     table.ajax.reload();
                 });
 
@@ -160,22 +174,25 @@
                     table.ajax.reload();
                 });
 
+                // Export Excel with filters
                 $('#export-excel').on('click', function(e) {
                     e.preventDefault();
-                    const tahun = $('#filter-tahun').val();
-                    const search = $('#filter-search').val();
-                    const url = "{{ route('admin.transaksi.export.excel') }}?tahun=" + tahun + "&search=" +
-                        encodeURIComponent(search);
-                    window.open(url, '_blank');
+                    const params = $.param({
+                        tahun: $('#filter-tahun').val(),
+                        bulan: $('#filter-bulan').val(),
+                        status: $('#filter-status').val(),
+                        search: $('#filter-search').val()
+                    });
+                    window.open("{{ route('admin.transaksi.export.excel') }}?" + params, '_blank');
                 });
 
-
+                // Update Status Modal
                 $(document).on('click', '.btn-update-status', function(e) {
                     e.preventDefault();
                     const transaksiId = $(this).data('id');
                     const currentStatus = $(this).data('status');
 
-                    console.log('Transaksi ID:', transaksiId, 'Current Status:', currentStatus); // Debug
+                    console.log('Transaksi ID:', transaksiId, 'Current Status:', currentStatus);
 
                     $('#transaksi_id').val(transaksiId);
                     $('#status_pembayaran').val(currentStatus);
@@ -247,9 +264,7 @@
                                 try {
                                     const errorResponse = JSON.parse(xhr.responseText);
                                     msg = errorResponse.message || msg;
-                                } catch (e) {
-
-                                }
+                                } catch (e) {}
                             }
 
                             Swal.fire('Error!', msg, 'error');
@@ -260,6 +275,7 @@
                     });
                 });
 
+                // Show Items Modal
                 $(document).on('click', '.show-items', function() {
                     let items = $(this).data('items');
                     let html = '';

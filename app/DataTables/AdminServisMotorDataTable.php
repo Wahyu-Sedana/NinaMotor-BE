@@ -71,6 +71,10 @@ class AdminServisMotorDataTable extends DataTable
             $query->whereMonth('created_at', $bulan);
         }
 
+        if ($status = request('status')) {
+            $query->where('status', $status);
+        }
+
         if ($search = request('search_custom')) {
             $query->where(function ($q) use ($search) {
                 $q->whereHas('user', function ($uq) use ($search) {

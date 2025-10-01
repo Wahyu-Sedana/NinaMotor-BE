@@ -62,6 +62,23 @@ class AdminTransaksiController extends Controller
                 'status_pembayaran' => $request->status_pembayaran
             ]);
 
+            if ($transaksi->type_pembelian == 1 && $request->status_pembayaran == 'berhasil') {
+                $servis = \App\Models\ServisMotor::where('transaksi_id', $transaksi->id)->first();
+
+                if ($servis) {
+                    $servis->update([
+                        'status' => 'done'
+                    ]);
+
+                    $this->sendFirebaseNotification($servis, 'done');
+
+                    Log::info('Servis status auto-updated to done', [
+                        'servis_id' => $servis->id,
+                        'transaksi_id' => $transaksi->id
+                    ]);
+                }
+            }
+
             DB::commit();
 
             Log::info('Transaction status updated', [
@@ -169,10 +186,11 @@ class AdminTransaksiController extends Controller
     {
         $tahun = $request->get('tahun', now()->year);
         $bulan = $request->get('bulan');
+        $status = $request->get('status');
         $search = $request->get('search');
         $tanggal = now()->format('Y-m-d_H-i-s');
 
         $filename = "Laporan_Transaksi_{$tanggal}.xlsx";
-        return Excel::download(new TransaksiExport($tahun,  $bulan, $search), $filename);
+        return Excel::download(new TransaksiExport($tahun,  $bulan, $status, $search), $filename);
     }
 }

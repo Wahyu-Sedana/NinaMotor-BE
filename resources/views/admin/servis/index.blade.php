@@ -59,6 +59,19 @@
                         </select>
                     </div>
 
+                    {{-- Filter Status --}}
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="filter-status" class="mb-0 small">Status:</label>
+                        <select id="filter-status" class="form-select form-select-sm" style="width: 130px;">
+                            <option value="">Semua Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_service">Proses</option>
+                            <option value="rejected">Ditolak</option>
+                            <option value="done">Selesai</option>
+                            <option value="priced">Sudah Dibayar</option>
+                        </select>
+                    </div>
+
                     {{-- Filter Search --}}
                     <div class="d-flex align-items-center gap-2">
                         <label for="filter-search" class="mb-0 small">Cari:</label>
@@ -95,11 +108,12 @@
             $('#servismotor-table').on('preXhr.dt', function(e, settings, data) {
                 data.tahun = $('#filter-tahun').val();
                 data.bulan = $('#filter-bulan').val();
+                data.status = $('#filter-status').val();
                 data.search_custom = $('#filter-search').val();
             });
 
             // Reload tabel saat filter tahun/bulan berubah
-            $('#filter-tahun, #filter-bulan').on('change', function() {
+            $('#filter-tahun, #filter-bulan, #filter-status').on('change', function() {
                 table.ajax.reload();
             });
 
@@ -118,8 +132,9 @@
                 let tahun = $('#filter-tahun').val();
                 let bulan = $('#filter-bulan').val();
                 let search = $('#filter-search').val();
+                let status = $('#filter-status').val();
                 let url = "{{ route('admin.servis.export.excel') }}?tahun=" + tahun + "&bulan=" + bulan +
-                    "&search=" + search;
+                    "&status" + status + "&search=" + search;
                 window.location.href = url;
             });
 

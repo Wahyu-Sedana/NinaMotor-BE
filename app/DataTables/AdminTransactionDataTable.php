@@ -80,6 +80,11 @@ class AdminTransactionDataTable extends DataTable
         if ($bulan = request('bulan')) {
             $query->whereMonth('tb_transaksi.tanggal_transaksi', $bulan);
         }
+
+        if ($status = request('status')) {
+            $query->where('tb_transaksi.status_pembayaran', $status);
+        }
+
         if ($search = request('search_custom')) {
             $query->where(function ($q) use ($search) {
                 $q->where('tb_users.nama', 'like', "%{$search}%")

@@ -65,6 +65,7 @@ class UsersController extends Controller
             'email'     => 'required|email',
             'password'  => 'required|string',
             'fcm_token' => 'nullable|string',
+            'phone_id'  => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -94,16 +95,28 @@ class UsersController extends Controller
                 ], 200);
             }
 
+            if ($user->phone_id && $user->phone_id !== $request->phone_id) {
+                return response()->json([
+                    'status'  => 403,
+                    'message' => 'Akun ini sudah digunakan di perangkat lain. Silakan logout dari perangkat tersebut terlebih dahulu.',
+                    'user'    => []
+                ], 200);
+            }
+
+            $user->phone_id = $request->phone_id;
+
             if ($request->has('fcm_token') && $request->fcm_token) {
                 $user->fcm_token = $request->fcm_token;
-                $user->save();
-
-                Log::info('FCM token updated for user', [
-                    'user_id' => $user->id,
-                    'email' => $user->email,
-                    'fcm_token_updated' => true
-                ]);
             }
+
+            $user->save();
+
+            Log::info('User logged in successfully', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'phone_id' => $request->phone_id,
+                'fcm_token_updated' => $request->has('fcm_token')
+            ]);
 
             $token = $user->createToken('api_token')->plainTextToken;
 
@@ -148,15 +161,18 @@ class UsersController extends Controller
         try {
             $user = $request->user();
 
-            $user->fcm_token = null;
-            $user->save();
+            if ($user) {
+                $user->phone_id = null;
+                $user->fcm_token = null;
+                $user->save();
 
-            $request->user()->currentAccessToken()->delete();
+                $request->user()->currentAccessToken()->delete();
 
-            Log::info('User logged out and FCM token cleared', [
-                'user_id' => $user->id,
-                'email' => $user->email
-            ]);
+                Log::info('User logged out successfully', [
+                    'user_id' => $user->id,
+                    'email' => $user->email
+                ]);
+            }
 
             return response()->json([
                 'status'  => 200,
@@ -167,7 +183,7 @@ class UsersController extends Controller
 
             return response()->json([
                 'status'  => 500,
-                'message' => 'Logout failed',
+                'message' => 'An unexpected error occurred',
             ], 500);
         }
     }
