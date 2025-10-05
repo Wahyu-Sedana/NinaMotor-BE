@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\Transaksi;
 use App\Models\User;
 use App\Notifications\NewServisNotification;
@@ -71,6 +72,7 @@ class TransaksiController extends Controller
             'cart_items.*.harga' => 'required|numeric',
             'cart_items.*.quantity' => 'required|integer|min:1',
             'alamat' => 'nullable|string',
+            'type_pembelian' => 'nullable|integer|in:0,1',
         ]);
 
         if ($validator->fails()) {
@@ -84,11 +86,7 @@ class TransaksiController extends Controller
         try {
             DB::beginTransaction();
 
-            $calculatedTotal = 0;
-            foreach ($request->cart_items as $item) {
-                $calculatedTotal += $item['harga'] * $item['quantity'];
-            }
-
+            $calculatedTotal = collect($request->cart_items)->sum(fn($item) => $item['harga'] * $item['quantity']);
             if ($calculatedTotal != $request->total) {
                 throw new \Exception('Total amount mismatch');
             }
@@ -96,6 +94,7 @@ class TransaksiController extends Controller
             $tempOrderId = 'ORD-' . time() . '-' . Str::random(6);
             $metodePembayaran = $request->metode_pembayaran ?? 'cash';
             $snapToken = null;
+            $typePembelian = $request->input('type_pembelian', 0);
 
             if ($metodePembayaran !== 'cash') {
                 $itemDetails = [];
@@ -123,17 +122,8 @@ class TransaksiController extends Controller
                             'country_code' => 'IDN'
                         ]
                     ],
-                    'enabled_payments' => [
-                        'mandiri_va',
-                        'bca_va',
-                        'bni_va',
-                        'bri_va',
-                        'qris'
-                    ],
-                    'credit_card' => [
-                        'secure' => true,
-                        'save_card' => false
-                    ],
+                    'enabled_payments' => ['mandiri_va', 'bca_va', 'bni_va', 'bri_va', 'qris'],
+                    'credit_card' => ['secure' => true, 'save_card' => false],
                     'expiry' => [
                         'start_time' => date('Y-m-d H:i:s O'),
                         'unit' => 'minutes',
@@ -153,34 +143,41 @@ class TransaksiController extends Controller
                 'status_pembayaran' => 'pending',
                 'snap_token' => $snapToken,
                 'items_data' => json_encode($request->cart_items),
+                'type_pembelian' => $typePembelian,
+            ]);
+
+            AdminNotification::create([
+                'type' => 'new_transaction',
+                'notifiable_type' => Transaksi::class,
+                'notifiable_id' => $transaksi->id,
+                'title' => 'Transaksi Baru',
+                'message' => "Transaksi #{$transaksi->id} sebesar Rp " . number_format($transaksi->total) .
+                    " (" . ($typePembelian == 0 ? 'Sparepart' : 'Servis Motor') . ")",
+                'data' => [
+                    'transaksi_id' => $transaksi->id,
+                    'total' => $transaksi->total,
+                    'user_name' => $transaksi->user->nama ?? 'Unknown',
+                    'status' => $transaksi->status_pembayaran,
+                    'type_pembelian' => $typePembelian,
+                ],
+                'action_url' => "/admin/transaksi/{$transaksi->id}",
             ]);
 
             DB::commit();
 
-            Log::info('Transaction created successfully', [
-                'order_id' => $tempOrderId,
-                'user_id' => $request->user_id,
-                'total' => $request->total,
-                'payment_method' => $metodePembayaran
-            ]);
+            $this->sendAdminWebNotification($transaksi);
 
             $responseData = [
                 'success' => true,
                 'message' => 'Transaction created successfully',
                 'order_id' => $tempOrderId,
                 'total' => $request->total,
-                'status' => 'pending'
+                'status' => 'pending',
+                'type_pembelian' => $typePembelian,
             ];
 
             if ($metodePembayaran !== 'cash') {
                 $responseData['snap_token'] = $snapToken;
-            }
-
-
-            $admin = User::where('role', 'admin')->first();
-
-            if ($admin) {
-                $admin->notify(new NewTransactionNotification($transaksi));
             }
 
             return response()->json($responseData, 200);
@@ -197,6 +194,50 @@ class TransaksiController extends Controller
                 'message' => 'Failed to create transaction',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+
+    private function sendAdminWebNotification($transaksi)
+    {
+        try {
+            if (!$this->messaging) {
+                Log::warning('Firebase messaging not available for admin notification');
+                return false;
+            }
+
+            if (!$transaksi->relationLoaded('user')) {
+                $transaksi->load('user');
+            }
+
+            $message = CloudMessage::withTarget('topic', 'admin_notifications')
+                ->withNotification(Notification::create(
+                    '💰 Transaksi Baru!',
+                    "Order #{$transaksi->id} sebesar Rp " . number_format($transaksi->total, 0, ',', '.')
+                ))
+                ->withData([
+                    'type' => 'new_transaction',
+                    'transaksi_id' => (string)$transaksi->id,
+                    'order_id' => $transaksi->id,
+                    'total' => (string)$transaksi->total,
+                    'status' => $transaksi->status_pembayaran,
+                    'metode_pembayaran' => $transaksi->metode_pembayaran,
+                    'user_name' => $transaksi->user->name ?? 'Unknown',
+                    'user_id' => $transaksi->user_id,
+                    'created_at' => $transaksi->created_at->toISOString(),
+                ]);
+
+            $this->messaging->send($message);
+
+            Log::info('Admin web notification sent for transaction', [
+                'transaksi_id' => $transaksi->id,
+                'total' => $transaksi->total
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send admin web notification for transaction: ' . $e->getMessage());
+            return false;
         }
     }
 
@@ -372,125 +413,4 @@ class TransaksiController extends Controller
                 ];
         }
     }
-
-    // public function continuePayment(Request $request)
-    // {
-    //     $validator = Validator::make($request->all(), [
-    //         'order_id' => 'required|string',
-    //         'user_id' => 'required|string',
-    //     ]);
-
-    //     if ($validator->fails()) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Validation failed',
-    //             'errors' => $validator->errors()
-    //         ], 422);
-    //     }
-
-    //     try {
-    //         $transaksi = Transaksi::where('id', $request->order_id)
-    //             ->where('user_id', $request->user_id)
-    //             ->first();
-
-    //         if (!$transaksi) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Transaction not found'
-    //             ], 404);
-    //         }
-
-    //         if ($transaksi->status_pembayaran !== 'pending') {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Transaction is not pending',
-    //                 'current_status' => $transaksi->status_pembayaran
-    //             ], 400);
-    //         }
-
-    //         if (!$transaksi->snap_token) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Snap token not found'
-    //             ], 400);
-    //         }
-
-    //         try {
-    //             $status = MidtransTransaction::status($transaksi->id);
-
-    //             if ($status->transaction_status !== 'pending') {
-    //                 $oldStatus = $transaksi->status_pembayaran;
-
-    //                 switch ($status->transaction_status) {
-    //                     case 'capture':
-    //                     case 'settlement':
-    //                         $transaksi->status_pembayaran = 'berhasil';
-    //                         break;
-    //                     case 'expire':
-    //                         $transaksi->status_pembayaran = 'expired';
-    //                         break;
-    //                     case 'deny':
-    //                     case 'cancel':
-    //                         $transaksi->status_pembayaran = 'gagal';
-    //                         break;
-    //                 }
-
-    //                 if (!empty($status->payment_type)) {
-    //                     $transaksi->metode_pembayaran = $status->payment_type;
-    //                 }
-
-    //                 if (!empty($status->va_numbers)) {
-    //                     $transaksi->va_number = $status->va_numbers[0]->va_number ?? null;
-    //                     $transaksi->bank = $status->va_numbers[0]->bank ?? null;
-    //                 }
-
-    //                 $transaksi->save();
-
-    //                 if ($oldStatus !== $transaksi->status_pembayaran) {
-    //                     $this->sendFirebaseNotification($transaksi, $status);
-    //                 }
-
-    //                 return response()->json([
-    //                     'success' => false,
-    //                     'message' => 'Transaction status has changed',
-    //                     'current_status' => $transaksi->status_pembayaran
-    //                 ], 400);
-    //             }
-    //         } catch (\Exception $e) {
-    //             Log::warning('Failed to check Midtrans status: ' . $e->getMessage());
-    //         }
-
-    //         $isProduction = config('services.midtrans.is_production');
-    //         $baseUrl = $isProduction
-    //             ? 'https://app.midtrans.com/snap/v2/vtweb/'
-    //             : 'https://app.sandbox.midtrans.com/snap/v2/vtweb/';
-
-    //         $paymentUrl = $baseUrl . $transaksi->snap_token;
-
-    //         Log::info('Continue payment requested', [
-    //             'order_id' => $transaksi->id,
-    //             'user_id' => $request->user_id
-    //         ]);
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Payment URL generated successfully',
-    //             'data' => [
-    //                 'order_id' => $transaksi->id,
-    //                 'snap_token' => $transaksi->snap_token,
-    //                 'payment_url' => $paymentUrl,
-    //                 'total' => $transaksi->total,
-    //                 'status' => $transaksi->status_pembayaran
-    //             ]
-    //         ], 200);
-    //     } catch (\Exception $e) {
-    //         Log::error('Continue payment failed: ' . $e->getMessage());
-
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Failed to continue payment',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
 }

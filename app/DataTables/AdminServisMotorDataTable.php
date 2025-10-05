@@ -45,6 +45,8 @@ class AdminServisMotorDataTable extends DataTable
                         return '<span class="badge bg-info">Pembayaran</span>';
                     case 'done':
                         return '<span class="badge bg-success">Selesai</span>';
+                    case 'rejected':
+                        return '<span class="badge bg-danger">Ditolak</span>';
                     default:
                         return '<span class="badge bg-secondary">Tidak Diketahui</span>';
                 }

@@ -29,6 +29,12 @@ use Kreait\Firebase\Messaging\Notification;
 Route::post('/register', [UsersController::class, 'register']);
 Route::post('/login', [UsersController::class, 'login']);
 
+Route::post('/resend-verification', [UsersController::class, 'resendVerification']);
+Route::get('/verify-email/{token}', [UsersController::class, 'verifyEmail']);
+
+Route::post('/forgot-password', [UsersController::class, 'forgotPassword']);
+Route::post('/reset-password', [UsersController::class, 'resetPasswordWithToken']);
+
 Route::post('/midtrans/callback', [TransaksiController::class, 'midtransCallback']);
 Route::get('/sparepart', [SparepartController::class, 'index']);
 Route::post('/check-email', [UsersController::class, 'checkUserByEmail']);

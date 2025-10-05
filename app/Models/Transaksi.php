@@ -24,6 +24,7 @@ class Transaksi extends Model
         'status_pembayaran',
         'snap_token',
         'items_data',
+        'type_pembelian',
     ];
 
     const STATUS_PENDING = 'pending';

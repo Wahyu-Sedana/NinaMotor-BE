@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\DataTables\AdminServisMotorDataTable;
 use App\Exports\ServisMotorExport;
+use App\Models\AdminNotification;
 use App\Models\ServisMotor;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
@@ -269,6 +270,7 @@ class AdminServisMotorController extends Controller
                     'status_pembayaran' => Transaksi::STATUS_PENDING,
                     'items_data' => json_encode($itemsData),
                     'metode_pembayaran' => 'cash',
+                    'type_pembelian' => 1
                 ]);
 
                 $servisMotor->update([
@@ -405,5 +407,238 @@ class AdminServisMotorController extends Controller
 
         $filename = "Laporan_Servis_Motor_{$tanggal}.xlsx";
         return Excel::download(new ServisMotorExport($tahun,  $bulan, $search), $filename);
+    }
+
+    /**
+     * Send notification to all admin when new servis created
+     */
+    public function sendNewServisNotificationToAdmin(ServisMotor $servisMotor)
+    {
+        try {
+            if (!$this->messaging) {
+                Log::warning('Firebase messaging not available');
+                return false;
+            }
+
+            $message = CloudMessage::withTarget('topic', 'admin_notifications')
+                ->withNotification(Notification::create(
+                    '🔔 Pengajuan Servis Baru!',
+                    "Motor {$servisMotor->no_kendaraan} - {$servisMotor->keluhan}"
+                ))
+                ->withData([
+                    'type' => 'new_servis',
+                    'servis_id' => (string)$servisMotor->id,
+                    'no_kendaraan' => $servisMotor->no_kendaraan,
+                    'jenis_motor' => $servisMotor->jenis_motor,
+                    'keluhan' => $servisMotor->keluhan,
+                    'status' => $servisMotor->status,
+                    'user_name' => $servisMotor->user->name ?? 'Unknown',
+                    'created_at' => $servisMotor->created_at->toISOString(),
+                    'click_action' => 'SERVIS_DETAIL',
+                ]);
+
+            $this->messaging->send($message);
+
+            Log::info('Admin notification sent successfully', [
+                'servis_id' => $servisMotor->id,
+                'topic' => 'admin_notifications'
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send admin notification: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get recent servis for dashboard (untuk polling jika perlu)
+     */
+    public function getRecentServis(Request $request)
+    {
+        try {
+            $limit = $request->get('limit', 10);
+
+            $recentServis = ServisMotor::with('user:id,nama')
+                ->latest()
+                ->limit($limit)
+                ->get()
+                ->map(function ($servis) {
+                    return [
+                        'id' => $servis->id,
+                        'no_kendaraan' => $servis->no_kendaraan,
+                        'jenis_motor' => $servis->jenis_motor,
+                        'keluhan' => $servis->keluhan,
+                        'status' => $servis->status,
+                        'user_name' => $servis->user->nama ?? 'Unknown',
+                        'created_at' => $servis->created_at->toIso8601String(),
+                        'formatted_date' => $servis->created_at->format('d M Y H:i'),
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $recentServis
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting recent servis: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data'
+            ], 500);
+        }
+    }
+
+
+    public function subscribeToTopic(Request $request)
+    {
+        try {
+            $token = $request->input('token');
+            $topic = $request->input('topic', 'admin_notifications');
+
+            if (!$token) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token tidak ditemukan'
+                ], 400);
+            }
+
+            if (!$this->messaging) {
+                Log::warning('Firebase messaging not initialized');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Firebase messaging tidak tersedia'
+                ], 500);
+            }
+
+            $this->messaging->subscribeToTopic($topic, $token);
+
+            Log::info('Admin subscribed to topic', [
+                'topic' => $topic,
+                'token' => substr($token, 0, 20) . '...'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Berhasil subscribe ke topic {$topic}",
+                'topic' => $topic
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to subscribe to topic: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal subscribe ke topic: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getUnreadNotifications(Request $request)
+    {
+        try {
+            $notifications = AdminNotification::unread()
+                ->with('notifiable')
+                ->latest()
+                ->limit(20)
+                ->get()
+                ->map(function ($notif) {
+                    return [
+                        'id' => $notif->id,
+                        'type' => $notif->type,
+                        'title' => $notif->title,
+                        'message' => $notif->message,
+                        'data' => $notif->data,
+                        'action_url' => $notif->action_url,
+                        'formatted_date' => $notif->created_at->locale('id')->format('d M Y H:i'),
+                        'time_ago' => $notif->created_at->locale('id')->diffForHumans(),
+                        'created_at' => $notif->created_at->toIso8601String(),
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $notifications,
+                'count' => $notifications->count()
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting unread notifications: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil notifikasi'
+            ], 500);
+        }
+    }
+
+    public function getUnreadCount(Request $request)
+    {
+        try {
+            $count = AdminNotification::unread()->count();
+
+            return response()->json([
+                'success' => true,
+                'count' => $count
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting unread count: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'count' => 0
+            ], 500);
+        }
+    }
+
+    /**
+     * Mark single notification as read (dan DELETE dari database)
+     */
+    public function markAsRead(Request $request, $id)
+    {
+        try {
+            $notification = AdminNotification::find($id);
+
+            if (!$notification) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Notifikasi tidak ditemukan'
+                ], 404);
+            }
+
+            // DELETE notifikasi setelah dibaca
+            $notification->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notifikasi berhasil ditandai sebagai dibaca dan dihapus'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error marking notification as read: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menandai notifikasi'
+            ], 500);
+        }
+    }
+
+    /**
+     * Mark all notifications as read (DELETE semua)
+     */
+    public function markAllAsRead(Request $request)
+    {
+        try {
+            $count = AdminNotification::unread()->count();
+
+            AdminNotification::unread()->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} notifikasi berhasil ditandai sebagai dibaca dan dihapus",
+                'deleted_count' => $count
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error marking all as read: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menandai semua notifikasi'
+            ], 500);
+        }
     }
 }
