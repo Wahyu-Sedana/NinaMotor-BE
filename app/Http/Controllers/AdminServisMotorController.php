@@ -359,44 +359,59 @@ class AdminServisMotorController extends Controller
         $kendaraan = $servisMotor->no_kendaraan;
         $harga = $servisMotor->harga_servis ? number_format($servisMotor->harga_servis, 0, ',', '.') : '';
 
+        $notification = [
+            'sound' => 'sound.aiff',
+        ];
+
         switch ($status) {
             case 'pending':
-                return [
+                $notification += [
                     'title' => 'Servis Motor - Menunggu Konfirmasi',
                     'body' => "Servis motor {$kendaraan} sedang menunggu konfirmasi dari teknisi kami."
                 ];
+                break;
 
             case 'rejected':
-                return [
+                $notification += [
                     'title' => 'Servis Motor - Ditolak',
                     'body' => "Maaf, servis motor {$kendaraan} tidak dapat kami proses. Silakan hubungi kami untuk informasi lebih lanjut."
                 ];
+                break;
 
             case 'in_service':
-                return [
+                $notification += [
                     'title' => 'Servis Motor - Sedang Dikerjakan',
                     'body' => "Motor {$kendaraan} sedang dalam proses servis. Kami akan segera menginformasikan jika sudah selesai."
                 ];
+                break;
 
             case 'priced':
-                return [
+                $notification += [
                     'title' => 'Servis Motor - Estimasi Biaya',
-                    'body' => $harga ? "Estimasi biaya servis motor {$kendaraan} adalah Rp {$harga}. Silakan lakukan pembayaran untuk melanjutkan." : "Estimasi biaya servis motor {$kendaraan} sudah tersedia. Silakan cek aplikasi untuk detailnya."
+                    'body' => $harga
+                        ? "Estimasi biaya servis motor {$kendaraan} adalah Rp {$harga}. Silakan lakukan pembayaran untuk melanjutkan."
+                        : "Estimasi biaya servis motor {$kendaraan} sudah tersedia. Silakan cek aplikasi untuk detailnya."
                 ];
+                break;
 
             case 'done':
-                return [
+                $notification += [
                     'title' => 'Servis Motor - Selesai',
                     'body' => "Servis motor {$kendaraan} telah selesai! Motor Anda sudah siap diambil."
                 ];
+                break;
 
             default:
-                return [
+                $notification += [
                     'title' => 'Update Status Servis Motor',
                     'body' => "Status servis motor {$kendaraan} telah diperbarui."
                 ];
+                break;
         }
+
+        return $notification;
     }
+
 
     public function exportExcel(Request $request)
     {

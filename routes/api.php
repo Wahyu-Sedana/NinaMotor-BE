@@ -4,10 +4,12 @@ use App\Http\Controllers\AlamatController;
 use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\KategoriSparepartController;
+use App\Http\Controllers\Api\ReviewsController;
 use App\Http\Controllers\Api\ServisMotorController;
 use App\Http\Controllers\Api\SparepartController;
 use App\Http\Controllers\Api\TransaksiController;
 use App\Http\Controllers\Api\UsersController;
+use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -78,6 +80,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/alamat/{id}', [AlamatController::class, 'update']);
     Route::delete('/alamat/{id}', [AlamatController::class, 'destroy']);
     Route::post('/alamat/{id}/set-default', [AlamatController::class, 'setDefault']);
+
+    Route::get('/reviews/{sparepartId}', [ReviewsController::class, 'index']);
+    Route::post('/reviews', [ReviewsController::class, 'store']);
+    Route::delete('/reviews/{review}', [ReviewsController::class, 'destroy']);
 });
 
 
