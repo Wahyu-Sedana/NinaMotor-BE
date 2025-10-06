@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\DataTables\AdminTransactionDataTable;
 use App\Exports\TransaksiExport;
 use App\Models\AdminNotification;
+use App\Models\ServisMotor;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -111,7 +112,7 @@ class AdminTransaksiController extends Controller
                 'id' => $transaksi->id,
                 'old_status' => $oldStatus,
                 'new_status' => $transaksi->status_pembayaran,
-                'user' => auth()->user()->name ?? 'Unknown'
+                'user' => auth()->user()->nama ?? 'Unknown'
             ]);
 
             if ($request->expectsJson()) {
@@ -143,6 +144,63 @@ class AdminTransaksiController extends Controller
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat memperbarui status.')
                 ->withInput();
+        }
+    }
+
+    private function sendFirebaseNotification(ServisMotor $servisMotor, string $newStatus)
+    {
+        try {
+            if (!$this->messaging) {
+                Log::warning('Firebase messaging not available, skipping notification');
+                return false;
+            }
+
+            if (!$servisMotor->relationLoaded('user')) {
+                $servisMotor->load('user');
+            }
+
+            if (!$servisMotor->user || !$servisMotor->user->fcm_token) {
+                Log::info('User tidak memiliki FCM token, skip notification untuk servis ID: ' . $servisMotor->id);
+                return false;
+            }
+
+            $notificationData = $this->getNotificationData($newStatus, $servisMotor);
+
+            $message = CloudMessage::withTarget('token', $servisMotor->user->fcm_token)
+                ->withNotification(Notification::create(
+                    $notificationData['title'],
+                    $notificationData['body']
+                ))
+                ->withData([
+                    'type' => 'servis_status_update',
+                    'servis_id' => (string)$servisMotor->id,
+                    'status' => $newStatus,
+                    'no_kendaraan' => $servisMotor->no_kendaraan,
+                    'jenis_motor' => $servisMotor->jenis_motor,
+                    'harga_servis' => $servisMotor->harga_servis ? (string)$servisMotor->harga_servis : '',
+                    'transaksi_id' => $servisMotor->transaksi_id ?? '',
+                    'updated_at' => $servisMotor->updated_at->toISOString(),
+                ]);
+
+            $this->messaging->send($message);
+
+            Log::info('Firebase notification sent successfully', [
+                'user_id' => $servisMotor->user->id,
+                'servis_id' => $servisMotor->id,
+                'status' => $newStatus,
+                'fcm_token' => substr($servisMotor->user->fcm_token, 0, 20) . '...'
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send Firebase notification', [
+                'error' => $e->getMessage(),
+                'servis_id' => $servisMotor->id,
+                'status' => $newStatus,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return false;
         }
     }
 
