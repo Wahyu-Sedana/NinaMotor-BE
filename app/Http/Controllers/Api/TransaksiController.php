@@ -73,6 +73,11 @@ class TransaksiController extends Controller
             'cart_items.*.quantity' => 'required|integer|min:1',
             'alamat' => 'nullable|string',
             'type_pembelian' => 'nullable|integer|in:0,1',
+            'alamat_id' => 'nullable|string',
+            'kurir' => 'nullable|string',
+            'service' => 'nullable|string',
+            'estimasi' => 'nullable|string',
+            'ongkir' => 'nullable|numeric',
         ]);
 
         if ($validator->fails()) {
@@ -86,9 +91,12 @@ class TransaksiController extends Controller
         try {
             DB::beginTransaction();
 
-            $calculatedTotal = collect($request->cart_items)->sum(fn($item) => $item['harga'] * $item['quantity']);
-            if ($calculatedTotal != $request->total) {
-                throw new \Exception('Total amount mismatch');
+            $subtotal = collect($request->cart_items)->sum(fn($item) => $item['harga'] * $item['quantity']);
+            $ongkir = $request->input('ongkir', 0);
+            $grandTotal = $subtotal + $ongkir;
+
+            if ($grandTotal != $request->total) {
+                throw new \Exception("Total amount mismatch: calculated $grandTotal, received {$request->total}");
             }
 
             $tempOrderId = 'ORD-' . time() . '-' . Str::random(6);
@@ -96,21 +104,31 @@ class TransaksiController extends Controller
             $snapToken = null;
             $typePembelian = $request->input('type_pembelian', 0);
 
-            if ($metodePembayaran !== 'cash') {
-                $itemDetails = [];
-                foreach ($request->cart_items as $item) {
-                    $itemDetails[] = [
-                        'id' => $item['id'],
-                        'price' => (int) $item['harga'],
-                        'quantity' => (int) $item['quantity'],
-                        'name' => $item['nama'],
-                    ];
-                }
+            // Siapkan item_details untuk Midtrans, termasuk ongkir
+            $itemDetails = [];
+            foreach ($request->cart_items as $item) {
+                $itemDetails[] = [
+                    'id' => $item['id'],
+                    'price' => (int) $item['harga'],
+                    'quantity' => (int) $item['quantity'],
+                    'name' => $item['nama'],
+                ];
+            }
 
+            if ($ongkir > 0) {
+                $itemDetails[] = [
+                    'id' => 'ongkir',
+                    'price' => (int) $ongkir,
+                    'quantity' => 1,
+                    'name' => 'Ongkir',
+                ];
+            }
+
+            if ($metodePembayaran !== 'cash') {
                 $params = [
                     'transaction_details' => [
                         'order_id' => $tempOrderId,
-                        'gross_amount' => (int) $request->total,
+                        'gross_amount' => (int) $grandTotal,
                     ],
                     'item_details' => $itemDetails,
                     'customer_details' => [
@@ -134,18 +152,25 @@ class TransaksiController extends Controller
                 $snapToken = Snap::getSnapToken($params);
             }
 
+            // Simpan transaksi ke database
             $transaksi = Transaksi::create([
                 'id' => $tempOrderId,
                 'user_id' => $request->user_id,
                 'tanggal_transaksi' => now(),
-                'total' => $request->total,
+                'total' => $grandTotal,
                 'metode_pembayaran' => $metodePembayaran,
                 'status_pembayaran' => 'pending',
                 'snap_token' => $snapToken,
                 'items_data' => json_encode($request->cart_items),
                 'type_pembelian' => $typePembelian,
+                'alamat_id' => $request->input('alamat_id'),
+                'kurir' => $request->input('kurir'),
+                'service' => $request->input('service'),
+                'estimasi' => $request->input('estimasi'),
+                'ongkir' => $ongkir,
             ]);
 
+            // Notifikasi admin
             AdminNotification::create([
                 'type' => 'new_transaction',
                 'notifiable_type' => Transaksi::class,
@@ -164,14 +189,13 @@ class TransaksiController extends Controller
             ]);
 
             DB::commit();
-
             $this->sendAdminWebNotification($transaksi);
 
             $responseData = [
                 'success' => true,
                 'message' => 'Transaction created successfully',
                 'order_id' => $tempOrderId,
-                'total' => $request->total,
+                'total' => $grandTotal,
                 'status' => 'pending',
                 'type_pembelian' => $typePembelian,
             ];
@@ -196,6 +220,7 @@ class TransaksiController extends Controller
             ], 500);
         }
     }
+
 
 
     private function sendAdminWebNotification($transaksi)

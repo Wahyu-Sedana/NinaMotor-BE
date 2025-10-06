@@ -25,6 +25,11 @@ class Transaksi extends Model
         'snap_token',
         'items_data',
         'type_pembelian',
+        'alamat_id',
+        'ongkir',
+        'kurir',
+        'service',
+        'estimasi',
     ];
 
     const STATUS_PENDING = 'pending';
@@ -56,5 +61,10 @@ class Transaksi extends Model
     public function servisMotor()
     {
         return $this->hasOne(ServisMotor::class, 'transaksi_id', 'id');
+    }
+
+    public function alamatPengiriman()
+    {
+        return $this->belongsTo(AlamatPengiriman::class, 'alamat_id', 'id');
     }
 }

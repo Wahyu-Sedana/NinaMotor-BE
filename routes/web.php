@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminKategoriSparepartController;
 use App\Http\Controllers\AdminServisMotorController;
 use App\Http\Controllers\AdminSparepartController;
 use App\Http\Controllers\AdminTransaksiController;
+use App\Http\Controllers\Api\UsersController;
 use App\Http\Controllers\AuthenticationController;
 use App\Notifications\NewServisNotification;
 use App\Notifications\NewTransactionNotification;
@@ -33,6 +34,8 @@ Route::prefix('admin')->name('admin.')->middleware('guest')->group(function () {
     Route::get('/login', [AuthenticationController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthenticationController::class, 'login']);
 });
+
+Route::get('/verify-email/{token}', [UsersController::class, 'verifyEmail'])->name('verify.email');
 
 Route::post('/admin/subscribe-topic', [AdminServisMotorController::class, 'subscribeToTopic'])->name('admin.subscribe-topic');
 Route::get('/admin/servis/recent', [AdminServisMotorController::class, 'getRecentServis'])->name('admin.servis.recent');

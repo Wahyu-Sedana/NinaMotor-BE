@@ -333,17 +333,33 @@ class UsersController extends Controller
             $user = User::where('email_verification_token', $token)->first();
 
             if (!$user) {
-                return response()->json([
-                    'status'  => 404,
-                    'message' => 'Invalid verification token',
-                ], 200);
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'status'  => 404,
+                        'message' => 'Invalid verification token',
+                    ], 404);
+                }
+
+                return response()
+                    ->view('auth.verify-failed', [
+                        'title' => 'Invalid Token',
+                        'message' => 'Token verifikasi tidak valid atau sudah kadaluarsa.',
+                    ], 404);
             }
 
             if ($user->email_verified_at) {
-                return response()->json([
-                    'status'  => 200,
-                    'message' => 'Email already verified',
-                ], 200);
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'status'  => 200,
+                        'message' => 'Email already verified',
+                    ], 200);
+                }
+
+                return view('auth.verify-success', [
+                    'title' => 'Email Sudah Diverifikasi',
+                    'message' => 'Email Anda sudah terverifikasi. Silakan login.',
+                    'user' => $user,
+                ]);
             }
 
             $user->email_verified_at = now();
@@ -355,16 +371,31 @@ class UsersController extends Controller
                 'email' => $user->email
             ]);
 
-            return response()->json([
-                'status'  => 200,
-                'message' => 'Email verified successfully',
-            ], 200);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status'  => 200,
+                    'message' => 'Email verified successfully',
+                ], 200);
+            }
+
+            return view('auth.verify-success', [
+                'title' => 'Verifikasi Berhasil',
+                'message' => 'Terima kasih — email Anda berhasil diverifikasi. Anda sekarang dapat masuk ke akun.',
+                'user' => $user,
+            ]);
         } catch (\Throwable $th) {
             Log::error('Email verification error: ' . $th->getMessage());
 
-            return response()->json([
-                'status'  => 500,
-                'message' => 'Email verification failed',
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status'  => 500,
+                    'message' => 'Email verification failed',
+                ], 500);
+            }
+
+            return response()->view('auth.verify-failed', [
+                'title' => 'Terjadi Kesalahan',
+                'message' => 'Terjadi kesalahan saat memverifikasi email. Silakan coba lagi nanti.',
             ], 500);
         }
     }

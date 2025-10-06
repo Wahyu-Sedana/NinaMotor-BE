@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AlamatController;
 use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\KategoriSparepartController;
@@ -30,7 +31,6 @@ Route::post('/register', [UsersController::class, 'register']);
 Route::post('/login', [UsersController::class, 'login']);
 
 Route::post('/resend-verification', [UsersController::class, 'resendVerification']);
-Route::get('/verify-email/{token}', [UsersController::class, 'verifyEmail']);
 
 Route::post('/forgot-password', [UsersController::class, 'forgotPassword']);
 Route::post('/reset-password', [UsersController::class, 'resetPasswordWithToken']);
@@ -71,6 +71,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/profile/update', [UsersController::class, 'updateProfile']);
 
     Route::post('/logout', [UsersController::class, 'logout']);
+
+    Route::get('/alamat/user/{userId}', [AlamatController::class, 'getUserAddresses']);
+    Route::get('/alamat/{id}', [AlamatController::class, 'show']);
+    Route::post('/alamat', [AlamatController::class, 'store']);
+    Route::put('/alamat/{id}', [AlamatController::class, 'update']);
+    Route::delete('/alamat/{id}', [AlamatController::class, 'destroy']);
+    Route::post('/alamat/{id}/set-default', [AlamatController::class, 'setDefault']);
 });
 
 

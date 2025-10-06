@@ -20,24 +20,6 @@ class AdminTransactionDataTable extends DataTable
             ->addColumn('user_nama', function ($row) {
                 return $row->user ? $row->user->nama : '-';
             })
-            // ->addColumn('items_list', function ($row) {
-            //     $items = json_decode($row->items_data, true);
-            //     if (!$items) {
-            //         return '-';
-            //     }
-
-            //     $html = '<ul class="mb-0">';
-            //     foreach ($items as $item) {
-            //         $html .= '<li>'
-            //             . e($item['nama'])
-            //             . ' (' . $item['quantity'] . ' x Rp ' . number_format($item['harga'], 0, ',', '.') . ')'
-            //             . '</li>';
-            //     }
-            //     $html .= '</ul>';
-
-            //     return $html;
-            // })
-
             ->addColumn('tanggal_transaksi_formatted', function ($row) {
                 return Carbon::parse($row->tanggal_transaksi)
                     ->locale('id')
@@ -46,6 +28,50 @@ class AdminTransactionDataTable extends DataTable
             })
             ->addColumn('total_formatted', function ($row) {
                 return 'Rp ' . number_format($row->total, 0, ',', '.');
+            })
+            ->addColumn('total_ongkir', function ($row) {
+                return 'Rp ' . number_format($row->ongkir ?? 0, 0, ',', '.');
+            })
+            ->addColumn('type_pembelian_badge', function ($row) {
+                if ($row->type_pembelian == 0) {
+                    return '<span class="badge bg-primary">Sparepart</span>';
+                } elseif ($row->type_pembelian == 1) {
+                    return '<span class="badge bg-info">Servis Motor</span>';
+                } else {
+                    return '<span class="badge bg-secondary">-</span>';
+                }
+            })
+            ->addColumn('nama_penerima', function ($row) {
+                if ($row->alamatPengiriman) {
+                    return $row->alamatPengiriman->nama_penerima;
+                }
+                return '-';
+            })
+            ->addColumn('no_telp_penerima', function ($row) {
+                if ($row->alamatPengiriman) {
+                    return $row->alamatPengiriman->no_telp_penerima;
+                }
+                return '-';
+            })
+            ->addColumn('alamat_lengkap', function ($row) {
+                if ($row->alamatPengiriman) {
+                    $alamat = $row->alamatPengiriman;
+                    return $alamat->alamat_lengkap . ', '
+                        . $alamat->district_name . ', '
+                        . $alamat->city_name . ', '
+                        . $alamat->province_name . ' '
+                        . ($alamat->kode_pos ?? '');
+                }
+                return '-';
+            })
+            ->addColumn('kurir_info', function ($row) {
+                if ($row->kurir && $row->service) {
+                    return '<div>
+                        <strong>' . strtoupper($row->kurir) . '</strong> - ' . $row->service . '<br>
+                        <small class="text-muted">Estimasi: ' . ($row->estimasi ?? '-') . ' hari</small>
+                    </div>';
+                }
+                return '<span class="text-muted">-</span>';
             })
             ->addColumn('status_badge', function ($row) {
                 if ($row->status_pembayaran === 'berhasil') {
@@ -61,8 +87,7 @@ class AdminTransactionDataTable extends DataTable
             ->addColumn('action', function ($row) {
                 return view('admin.transaksi.action', compact('row'));
             })
-            ->rawColumns(['status_badge', 'action', 'items_list'])
-
+            ->rawColumns(['status_badge', 'action', 'type_pembelian_badge', 'alamat_info', 'kurir_info'])
             ->setRowId('id');
     }
 
@@ -70,6 +95,7 @@ class AdminTransactionDataTable extends DataTable
     {
         $query = $model->newQuery()
             ->leftJoin('tb_users', 'tb_transaksi.user_id', '=', 'tb_users.id')
+            ->with(['alamatPengiriman']) // Eager load alamat
             ->select('tb_transaksi.*', 'tb_users.nama as user_name')
             ->orderBy('tb_transaksi.created_at', 'desc');
 
@@ -85,10 +111,16 @@ class AdminTransactionDataTable extends DataTable
             $query->where('tb_transaksi.status_pembayaran', $status);
         }
 
+        // Filter by type pembelian
+        if ($type = request('type_pembelian')) {
+            $query->where('tb_transaksi.type_pembelian', $type);
+        }
+
         if ($search = request('search_custom')) {
             $query->where(function ($q) use ($search) {
                 $q->where('tb_users.nama', 'like', "%{$search}%")
-                    ->orWhere('tb_transaksi.metode_pembayaran', 'like', "%{$search}%");
+                    ->orWhere('tb_transaksi.metode_pembayaran', 'like', "%{$search}%")
+                    ->orWhere('tb_transaksi.kurir', 'like', "%{$search}%");
             });
         }
 
@@ -124,6 +156,11 @@ class AdminTransactionDataTable extends DataTable
                 ->title('Nama Customer')
                 ->width(150),
 
+            Column::computed('type_pembelian_badge')
+                ->title('Tipe')
+                ->width(100)
+                ->addClass('text-center'),
+
             Column::computed('tanggal_transaksi_formatted')
                 ->title('Tanggal')
                 ->width(150),
@@ -132,6 +169,28 @@ class AdminTransactionDataTable extends DataTable
                 ->title('Total')
                 ->addClass('text-end')
                 ->width(120),
+
+            Column::computed('total_ongkir')
+                ->title('Ongkir')
+                ->addClass('text-end')
+                ->width(100),
+
+            Column::computed('kurir_info')
+                ->title('Kurir & Estimasi')
+                ->width(150),
+
+            Column::computed('nama_penerima')
+                ->title('Penerima')
+                ->width(150),
+
+            Column::computed('no_telp_penerima')
+                ->title('No. Telepon')
+                ->width(120),
+
+            Column::computed('alamat_lengkap')
+                ->title('Alamat Lengkap')
+                ->width(250)
+                ->orderable(false),
 
             Column::make('metode_pembayaran')
                 ->title('Metode Pembayaran')
