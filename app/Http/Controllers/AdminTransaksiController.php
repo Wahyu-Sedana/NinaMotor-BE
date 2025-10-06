@@ -204,6 +204,50 @@ class AdminTransaksiController extends Controller
         }
     }
 
+    private function getNotificationData(string $status, ServisMotor $servisMotor): array
+    {
+        $kendaraan = $servisMotor->no_kendaraan;
+        $harga = $servisMotor->harga_servis ? number_format($servisMotor->harga_servis, 0, ',', '.') : '';
+
+        switch ($status) {
+            case 'pending':
+                return [
+                    'title' => 'Servis Motor - Menunggu Konfirmasi',
+                    'body' => "Servis motor {$kendaraan} sedang menunggu konfirmasi dari teknisi kami."
+                ];
+
+            case 'rejected':
+                return [
+                    'title' => 'Servis Motor - Ditolak',
+                    'body' => "Maaf, servis motor {$kendaraan} tidak dapat kami proses. Silakan hubungi kami untuk informasi lebih lanjut."
+                ];
+
+            case 'in_service':
+                return [
+                    'title' => 'Servis Motor - Sedang Dikerjakan',
+                    'body' => "Motor {$kendaraan} sedang dalam proses servis. Kami akan segera menginformasikan jika sudah selesai."
+                ];
+
+            case 'priced':
+                return [
+                    'title' => 'Servis Motor - Estimasi Biaya',
+                    'body' => $harga ? "Estimasi biaya servis motor {$kendaraan} adalah Rp {$harga}. Silakan lakukan pembayaran untuk melanjutkan." : "Estimasi biaya servis motor {$kendaraan} sudah tersedia. Silakan cek aplikasi untuk detailnya."
+                ];
+
+            case 'done':
+                return [
+                    'title' => 'Servis Motor - Selesai',
+                    'body' => "Servis motor {$kendaraan} telah selesai! Motor Anda sudah siap diambil."
+                ];
+
+            default:
+                return [
+                    'title' => 'Update Status Servis Motor',
+                    'body' => "Status servis motor {$kendaraan} telah diperbarui."
+                ];
+        }
+    }
+
     /**
      * Remove the specified resource from storage.
      */
