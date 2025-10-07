@@ -25,9 +25,7 @@ class PasswordResetMail extends Mailable
 
     public function build()
     {
-        // URL ini akan dibuka di app Flutter
-        $resetUrl = url('/api/reset-password?token=' . $this->token);
-
+        $resetUrl = url('/reset-password-form?token=' . $this->token);
         return $this->subject('Reset Password Akun Anda')
             ->view('emails.password-reset')
             ->with([

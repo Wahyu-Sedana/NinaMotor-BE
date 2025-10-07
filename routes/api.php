@@ -35,14 +35,9 @@ Route::post('/login', [UsersController::class, 'login']);
 Route::get('/verify-email/{token}', [UsersController::class, 'verifyEmail'])->name('verification.verify');
 Route::post('/resend-verification', [UsersController::class, 'resendVerification']);
 
-Route::post('/forgot-password', [UsersController::class, 'forgotPassword']);
-Route::post('/reset-password', [UsersController::class, 'resetPasswordWithToken']);
-Route::post('/check-email', [UsersController::class, 'checkUserByEmail']);
 
 Route::post('/midtrans/callback', [TransaksiController::class, 'midtransCallback']);
 Route::get('/sparepart', [SparepartController::class, 'index']);
-Route::post('/check-email', [UsersController::class, 'checkUserByEmail']);
-Route::post('/reset-password', [UsersController::class, 'resetPassword']);
 Route::post('/sparepart/kategori', [SparepartController::class, 'showDataByKategori']);
 Route::get('/kategori', [KategoriSparepartController::class, 'index']);
 

@@ -117,16 +117,6 @@
                 </p>
             </div>
 
-            <p>Atau gunakan kode token berikut di aplikasi:</p>
-
-            <div class="token-box">
-                <p style="margin: 0; font-size: 14px; color: #666;">Token Reset Password:</p>
-                <p class="token-code">{{ substr($token, 0, 20) }}...</p>
-            </div>
-
-            <p>Jika tombol di atas tidak berfungsi, salin dan tempel URL berikut ke browser Anda:</p>
-            <p style="word-break: break-all; color: #f5576c; font-size: 12px;">{{ $resetUrl }}</p>
-
             <p style="margin-top: 30px; font-size: 14px; color: #666;">
                 <strong>Jika Anda tidak meminta reset password, abaikan email ini.</strong> Password Anda tidak akan
                 berubah.

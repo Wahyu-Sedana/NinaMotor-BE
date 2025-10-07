@@ -28,6 +28,8 @@ Route::get('/', function () {
     return redirect()->route('admin.login');
 });
 
+Route::get('/reset-password-form', [UsersController::class, 'showResetForm'])->name('password.reset.form');
+
 
 // Route::get('/', [AdminController::class, 'index'])->name('admin.auth.login');
 Route::prefix('admin')->name('admin.')->middleware('guest')->group(function () {

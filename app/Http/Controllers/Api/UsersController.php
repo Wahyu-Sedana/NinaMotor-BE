@@ -178,92 +178,6 @@ class UsersController extends Controller
         }
     }
 
-    public function checkUserByEmail(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status'  => 422,
-                'message' => 'Validation error',
-                'errors'  => $validator->errors(),
-            ], 200);
-        }
-
-        try {
-            $user = User::where('email', $request->email)->first();
-
-            if ($user) {
-                return response()->json([
-                    'status'  => 200,
-                    'message' => 'User found',
-                    'user'    => $user,
-                ]);
-            } else {
-                return response()->json([
-                    'status'  => 404,
-                    'message' => 'User not found',
-                    'user'    => null,
-                ], 200);
-            }
-        } catch (\Throwable $th) {
-            Log::error('Check user by email error: ' . $th->getMessage());
-
-            return response()->json([
-                'status'  => 500,
-                'message' => 'Failed to check user',
-            ], 500);
-        }
-    }
-
-    public function resetPassword(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'current_password' => 'required|string',
-            'new_password'     => 'required|string|min:6|confirmed',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status'  => 422,
-                'message' => 'Validation error',
-                'errors'  => $validator->errors(),
-            ], 200);
-        }
-
-        try {
-            $user = $request->user();
-
-            if (!Hash::check($request->current_password, $user->password)) {
-                return response()->json([
-                    'status'  => 401,
-                    'message' => 'Current password is incorrect',
-                ], 200);
-            }
-
-            $user->password = Hash::make($request->new_password);
-            $user->save();
-
-            Log::info('User password updated', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-            ]);
-
-            return response()->json([
-                'status'  => 200,
-                'message' => 'Password updated successfully',
-            ]);
-        } catch (\Throwable $th) {
-            Log::error('Reset password error: ' . $th->getMessage());
-
-            return response()->json([
-                'status'  => 500,
-                'message' => 'Failed to update password',
-            ], 500);
-        }
-    }
 
     public function register(Request $request)
     {
@@ -452,6 +366,27 @@ class UsersController extends Controller
                 'message' => 'Failed to send verification email',
             ], 500);
         }
+    }
+
+    public function showResetForm(Request $request)
+    {
+        $token = $request->query('token');
+
+        if (!$token) {
+            return view('auth.reset-form')->with('error', 'Token reset tidak ditemukan.');
+        }
+
+        $user = User::where('password_reset_token', $token)->first();
+
+        if (!$user) {
+            return view('auth.reset-form')->with('error', 'Token tidak valid.');
+        }
+
+        if (Carbon::now()->greaterThan($user->password_reset_expires)) {
+            return view('auth.reset-form')->with('error', 'Token telah kedaluwarsa.');
+        }
+
+        return view('auth.reset-form', ['token' => $token]);
     }
 
     public function forgotPassword(Request $request)
