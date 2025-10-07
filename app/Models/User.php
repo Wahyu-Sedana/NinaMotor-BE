@@ -26,17 +26,25 @@ class User extends Authenticatable
         'alamat',
         'profile',
         'no_telp',
-        'fcm_token'
+        'fcm_token',
+        'email_verification_token',
+        'email_verified_at',
+        'password_reset_token',
+        'password_reset_expires',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'email_verification_token',
+        'password_reset_token',
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
+        'password_reset_expires' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     protected static function boot()
