@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Validator;
 use Midtrans\Config;
 use Illuminate\Support\Str;
 use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\AndroidConfig;
+use Kreait\Firebase\Messaging\ApnsConfig;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Midtrans\Snap;
@@ -385,8 +387,8 @@ class TransaksiController extends Controller
             $notificationData = $this->getNotificationContent($transaksi);
 
             $additionalData = [
-                'transaction_id' => $transaksi->id,
-                'order_id' => $transaksi->id,
+                'transaction_id' => (string) $transaksi->id,
+                'order_id' => (string) $transaksi->id,
                 'status' => $transaksi->status_pembayaran,
                 'amount' => (string) $transaksi->total,
                 'type' => 'payment_update',
@@ -397,11 +399,47 @@ class TransaksiController extends Controller
                     $notificationData['title'],
                     $notificationData['body']
                 ))
-                ->withData($additionalData);
+                ->withData($additionalData)
+                ->withApnsConfig(
+                    ApnsConfig::fromArray([
+                        'headers' => [
+                            'apns-priority' => '10',
+                        ],
+                        'payload' => [
+                            'aps' => [
+                                'alert' => [
+                                    'title' => $notificationData['title'],
+                                    'body' => $notificationData['body'],
+                                ],
+                                'sound' => 'sound.aiff',
+                                'badge' => 1,
+                                'mutable-content' => 1,
+                                'content-available' => 1,
+                            ],
+                        ],
+                    ])
+                )
+                ->withAndroidConfig(
+                    AndroidConfig::fromArray([
+                        'notification' => [
+                            'sound' => 'default',
+                            'channel_id' => 'channel ID',
+                        ],
+                    ])
+                );
 
             $this->messaging->send($message);
+
+            Log::info('Firebase notification sent successfully', [
+                'user_id' => $user->id,
+                'transaction_id' => $transaksi->id,
+                'status' => $transaksi->status_pembayaran,
+            ]);
         } catch (\Exception $e) {
-            Log::error('Failed to send notification: ' . $e->getMessage());
+            Log::error('Failed to send notification: ' . $e->getMessage(), [
+                'transaction_id' => $transaksi->id ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
     }
 
@@ -413,22 +451,22 @@ class TransaksiController extends Controller
         switch ($transaksi->status_pembayaran) {
             case 'berhasil':
                 return [
-                    'title' => 'Pembayaran Berhasil!',
+                    'title' => 'Pembayaran Berhasil! 🎉',
                     'body' => "Pembayaran order #{$orderId} sebesar {$amount} berhasil!"
                 ];
             case 'pending':
                 return [
-                    'title' => 'Menunggu Pembayaran',
+                    'title' => 'Menunggu Pembayaran ⏳',
                     'body' => "Order #{$orderId} sebesar {$amount} menunggu pembayaran."
                 ];
             case 'gagal':
                 return [
-                    'title' => 'Pembayaran Gagal',
+                    'title' => 'Pembayaran Gagal ❌',
                     'body' => "Pembayaran order #{$orderId} gagal. Silakan coba lagi."
                 ];
             case 'expired':
                 return [
-                    'title' => 'Pembayaran Expired',
+                    'title' => 'Pembayaran Expired ⏰',
                     'body' => "Pembayaran order #{$orderId} telah expired."
                 ];
             default:

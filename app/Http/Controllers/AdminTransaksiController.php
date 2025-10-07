@@ -15,6 +15,8 @@ use Kreait\Firebase\Messaging\Notification;
 use Maatwebsite\Excel\Facades\Excel;
 use Midtrans\Config;
 use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\AndroidConfig;
+use Kreait\Firebase\Messaging\ApnsConfig;
 
 class AdminTransaksiController extends Controller
 {
@@ -180,7 +182,34 @@ class AdminTransaksiController extends Controller
                     'harga_servis' => $servisMotor->harga_servis ? (string)$servisMotor->harga_servis : '',
                     'transaksi_id' => $servisMotor->transaksi_id ?? '',
                     'updated_at' => $servisMotor->updated_at->toISOString(),
-                ]);
+                ])
+                ->withApnsConfig(
+                    ApnsConfig::fromArray([
+                        'headers' => [
+                            'apns-priority' => '10',
+                        ],
+                        'payload' => [
+                            'aps' => [
+                                'alert' => [
+                                    'title' => $notificationData['title'],
+                                    'body' => $notificationData['body'],
+                                ],
+                                'sound' => 'sound.aiff',
+                                'badge' => 1,
+                                'mutable-content' => 1,
+                                'content-available' => 1,
+                            ],
+                        ],
+                    ])
+                )
+                ->withAndroidConfig(
+                    AndroidConfig::fromArray([
+                        'notification' => [
+                            'sound' => 'default',
+                            'channel_id' => 'channel ID',
+                        ],
+                    ])
+                );
 
             $this->messaging->send($message);
 
@@ -188,7 +217,6 @@ class AdminTransaksiController extends Controller
                 'user_id' => $servisMotor->user->id,
                 'servis_id' => $servisMotor->id,
                 'status' => $newStatus,
-                'fcm_token' => substr($servisMotor->user->fcm_token, 0, 20) . '...'
             ]);
 
             return true;
@@ -197,7 +225,6 @@ class AdminTransaksiController extends Controller
                 'error' => $e->getMessage(),
                 'servis_id' => $servisMotor->id,
                 'status' => $newStatus,
-                'trace' => $e->getTraceAsString()
             ]);
 
             return false;
@@ -209,43 +236,58 @@ class AdminTransaksiController extends Controller
         $kendaraan = $servisMotor->no_kendaraan;
         $harga = $servisMotor->harga_servis ? number_format($servisMotor->harga_servis, 0, ',', '.') : '';
 
+        $notification = [
+            'sound' => 'sound.aiff',
+            'badge' => 1,
+        ];
+
         switch ($status) {
             case 'pending':
-                return [
+                $notification += [
                     'title' => 'Servis Motor - Menunggu Konfirmasi',
                     'body' => "Servis motor {$kendaraan} sedang menunggu konfirmasi dari teknisi kami."
                 ];
+                break;
 
             case 'rejected':
-                return [
+                $notification += [
                     'title' => 'Servis Motor - Ditolak',
                     'body' => "Maaf, servis motor {$kendaraan} tidak dapat kami proses. Silakan hubungi kami untuk informasi lebih lanjut."
                 ];
+                break;
 
             case 'in_service':
-                return [
+                $notification += [
                     'title' => 'Servis Motor - Sedang Dikerjakan',
                     'body' => "Motor {$kendaraan} sedang dalam proses servis. Kami akan segera menginformasikan jika sudah selesai."
                 ];
+                break;
 
             case 'priced':
-                return [
+                $notification += [
                     'title' => 'Servis Motor - Estimasi Biaya',
-                    'body' => $harga ? "Estimasi biaya servis motor {$kendaraan} adalah Rp {$harga}. Silakan lakukan pembayaran untuk melanjutkan." : "Estimasi biaya servis motor {$kendaraan} sudah tersedia. Silakan cek aplikasi untuk detailnya."
+                    'body' => $harga
+                        ? "Estimasi biaya servis motor {$kendaraan} adalah Rp {$harga}. Silakan lakukan pembayaran untuk melanjutkan."
+                        : "Estimasi biaya servis motor {$kendaraan} sudah tersedia. Silakan cek aplikasi untuk detailnya."
                 ];
+                break;
 
             case 'done':
-                return [
+                $notification += [
                     'title' => 'Servis Motor - Selesai',
                     'body' => "Servis motor {$kendaraan} telah selesai! Motor Anda sudah siap diambil."
                 ];
+                break;
 
             default:
-                return [
+                $notification += [
                     'title' => 'Update Status Servis Motor',
                     'body' => "Status servis motor {$kendaraan} telah diperbarui."
                 ];
+                break;
         }
+
+        return $notification;
     }
 
     /**

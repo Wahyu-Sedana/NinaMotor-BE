@@ -16,7 +16,11 @@ use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Midtrans\Config;
 use Illuminate\Support\Str;
+use Kreait\Firebase\Messaging\AndroidConfig;
+use Kreait\Firebase\Messaging\ApnsConfig;
 use Maatwebsite\Excel\Facades\Excel;
+use Kreait\Firebase\Messaging\Aps;
+use Kreait\Firebase\Messaging\ApsAlert;
 
 class AdminServisMotorController extends Controller
 {
@@ -327,7 +331,34 @@ class AdminServisMotorController extends Controller
                     'harga_servis' => $servisMotor->harga_servis ? (string)$servisMotor->harga_servis : '',
                     'transaksi_id' => $servisMotor->transaksi_id ?? '',
                     'updated_at' => $servisMotor->updated_at->toISOString(),
-                ]);
+                ])
+                ->withApnsConfig(
+                    ApnsConfig::fromArray([
+                        'headers' => [
+                            'apns-priority' => '10',
+                        ],
+                        'payload' => [
+                            'aps' => [
+                                'alert' => [
+                                    'title' => $notificationData['title'],
+                                    'body' => $notificationData['body'],
+                                ],
+                                'sound' => 'sound.aiff',
+                                'badge' => 1,
+                                'mutable-content' => 1,
+                                'content-available' => 1,
+                            ],
+                        ],
+                    ])
+                )
+                ->withAndroidConfig(
+                    AndroidConfig::fromArray([
+                        'notification' => [
+                            'sound' => 'default',
+                            'channel_id' => 'channel ID',
+                        ],
+                    ])
+                );
 
             $this->messaging->send($message);
 
@@ -335,7 +366,6 @@ class AdminServisMotorController extends Controller
                 'user_id' => $servisMotor->user->id,
                 'servis_id' => $servisMotor->id,
                 'status' => $newStatus,
-                'fcm_token' => substr($servisMotor->user->fcm_token, 0, 20) . '...'
             ]);
 
             return true;
@@ -344,7 +374,6 @@ class AdminServisMotorController extends Controller
                 'error' => $e->getMessage(),
                 'servis_id' => $servisMotor->id,
                 'status' => $newStatus,
-                'trace' => $e->getTraceAsString()
             ]);
 
             return false;
@@ -361,6 +390,7 @@ class AdminServisMotorController extends Controller
 
         $notification = [
             'sound' => 'sound.aiff',
+            'badge' => 1,
         ];
 
         switch ($status) {
