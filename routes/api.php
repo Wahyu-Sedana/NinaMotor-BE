@@ -37,6 +37,7 @@ Route::post('/resend-verification', [UsersController::class, 'resendVerification
 
 Route::post('/forgot-password', [UsersController::class, 'forgotPassword']);
 Route::post('/reset-password', [UsersController::class, 'resetPasswordWithToken']);
+Route::get('/reviews/{sparepartId}', [ReviewsController::class, 'index']);
 
 
 Route::post('/midtrans/callback', [TransaksiController::class, 'midtransCallback']);
@@ -81,7 +82,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/alamat/{id}', [AlamatController::class, 'destroy']);
     Route::post('/alamat/{id}/set-default', [AlamatController::class, 'setDefault']);
 
-    Route::get('/reviews/{sparepartId}', [ReviewsController::class, 'index']);
     Route::post('/reviews', [ReviewsController::class, 'store']);
     Route::delete('/reviews/{review}', [ReviewsController::class, 'destroy']);
 });
