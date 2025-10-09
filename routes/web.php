@@ -69,13 +69,70 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     });
 
     // Sparepart
-    Route::resource('sparepart', AdminSparepartController::class);
+    Route::get('sparepart', [AdminSparepartController::class, 'index'])
+        ->name('sparepart.index');
+
+    Route::get('sparepart/create', [AdminSparepartController::class, 'create'])
+        ->name('sparepart.create');
+
+    Route::post('sparepart', [AdminSparepartController::class, 'store'])
+        ->name('sparepart.store');
+
+    Route::get('sparepart/{kode_sparepart}', [AdminSparepartController::class, 'show'])
+        ->name('sparepart.show');
+
+    Route::get('sparepart/{kode_sparepart}/edit', [AdminSparepartController::class, 'edit'])
+        ->name('sparepart.edit');
+
+    Route::put('sparepart/{kode_sparepart}', [AdminSparepartController::class, 'update'])
+        ->name('sparepart.update');
+
+    Route::delete('sparepart/{kode_sparepart}', [AdminSparepartController::class, 'destroy'])
+        ->name('sparepart.destroy');
 
     // Kategori Sparepart
-    Route::resource('kategori-sparepart', AdminKategoriSparepartController::class);
+    Route::get('kategori-sparepart', [AdminKategoriSparepartController::class, 'index'])
+        ->name('kategori-sparepart.index');
+
+    Route::get('kategori-sparepart/create', [AdminKategoriSparepartController::class, 'create'])
+        ->name('kategori-sparepart.create');
+
+    Route::post('kategori-sparepart', [AdminKategoriSparepartController::class, 'store'])
+        ->name('kategori-sparepart.store');
+
+    Route::get('kategori-sparepart/{id}', [AdminKategoriSparepartController::class, 'show'])
+        ->name('kategori-sparepart.show');
+
+    Route::get('kategori-sparepart/{id}/edit', [AdminKategoriSparepartController::class, 'edit'])
+        ->name('kategori-sparepart.edit');
+
+    Route::put('kategori-sparepart/{id}', [AdminKategoriSparepartController::class, 'update'])
+        ->name('kategori-sparepart.update');
+
+    Route::delete('kategori-sparepart/{id}', [AdminKategoriSparepartController::class, 'destroy'])
+        ->name('kategori-sparepart.destroy');
 
     // Customer
-    Route::resource('customer', AdminDataCustomerController::class);
+    Route::get('customer', [AdminDataCustomerController::class, 'index'])
+        ->name('customer.index');
+
+    Route::get('customer/create', [AdminDataCustomerController::class, 'create'])
+        ->name('customer.create');
+
+    Route::post('customer', [AdminDataCustomerController::class, 'store'])
+        ->name('customer.store');
+
+    Route::get('customer/{id}', [AdminDataCustomerController::class, 'show'])
+        ->name('customer.show');
+
+    Route::get('customer/{id}/edit', [AdminDataCustomerController::class, 'edit'])
+        ->name('customer.edit');
+
+    Route::put('customer/{id}', [AdminDataCustomerController::class, 'update'])
+        ->name('customer.update');
+
+    Route::delete('customer/{id}', [AdminDataCustomerController::class, 'destroy'])
+        ->name('customer.destroy');
 
     // Transaksi
     Route::resource('/transaksi', AdminTransaksiController::class);

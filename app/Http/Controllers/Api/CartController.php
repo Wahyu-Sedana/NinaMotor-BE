@@ -132,16 +132,16 @@ class CartController extends Controller
             $sparepart = Sparepart::find($item['sparepart_id']);
 
             if ($sparepart) {
-                $subtotal = $sparepart->harga_jual * $item['quantity'];
+                $subtotal = $sparepart->harga * $item['quantity'];
                 $total += $subtotal;
 
                 $items[] = [
                     'sparepart_id' => $sparepart->kode_sparepart,
                     'nama_sparepart' => $sparepart->nama_sparepart,
                     'gambar' => $sparepart->gambar_produk,
-                    'harga_jual' => $sparepart->harga_jual,
+                    'harga' => $sparepart->harga,
                     'quantity' => $item['quantity'],
-                    'subtotal' => $sparepart->harga_jual * $item['quantity'],
+                    'subtotal' => $sparepart->harga * $item['quantity'],
                 ];
             }
         }

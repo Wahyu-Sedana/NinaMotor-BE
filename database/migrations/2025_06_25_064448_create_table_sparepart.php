@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('nama');
             $table->text('deskripsi')->nullable();
             $table->integer('stok')->default(0);
-            $table->decimal('harga_beli', 12, 2);
-            $table->decimal('harga_jual', 12, 2);
+
+            $table->decimal('harga', 12, 2);
             $table->string('merk')->nullable();
             $table->text('gambar_produk')->nullable();
             $table->timestamps();

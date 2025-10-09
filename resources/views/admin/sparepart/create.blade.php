@@ -109,35 +109,19 @@
                     </div>
 
                     <div class="row">
-                        {{-- Harga Beli --}}
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="harga_beli" class="form-label">Harga Beli <span
-                                        class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text">Rp</span>
-                                    <input type="number" class="form-control @error('harga_beli') is-invalid @enderror"
-                                        id="harga_beli" name="harga_beli" value="{{ old('harga_beli') }}" placeholder="0"
-                                        min="0" step="0.01" required>
-                                </div>
-                                @error('harga_beli')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
 
                         {{-- Harga Jual --}}
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="harga_jual" class="form-label">Harga Jual <span
+                                <label for="harga" class="form-label">Harga Jual <span
                                         class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text">Rp</span>
-                                    <input type="number" class="form-control @error('harga_jual') is-invalid @enderror"
-                                        id="harga_jual" name="harga_jual" value="{{ old('harga_jual') }}"
-                                        placeholder="0" min="0" step="0.01" required>
+                                    <input type="number" class="form-control @error('harga') is-invalid @enderror"
+                                        id="harga" name="harga" value="{{ old('harga') }}" placeholder="0"
+                                        min="0" step="0.01" required>
                                 </div>
-                                @error('harga_jual')
+                                @error('harga')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -236,24 +220,6 @@
                 } else {
                     preview.hide();
                     noImage.show();
-                }
-            });
-
-            // Auto calculate suggested selling price (optional)
-            $('#harga_beli').on('input', function() {
-                const hargaBeli = parseFloat($(this).val()) || 0;
-                const suggestedPrice = Math.round(hargaBeli * 1.3); // 30% markup
-
-                if (hargaBeli > 0 && $('#harga_jual').val() === '') {
-                    $('#harga_jual').val(suggestedPrice);
-                }
-            });
-
-            // Format number input dengan separator
-            $('#harga_beli, #harga_jual').on('blur', function() {
-                const value = parseFloat($(this).val());
-                if (!isNaN(value)) {
-                    $(this).val(value.toFixed(0));
                 }
             });
         });

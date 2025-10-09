@@ -10,6 +10,7 @@ class KategoriSparepart extends Model
     use HasFactory;
 
     protected $table = 'tb_kategori_sparepart';
+    protected $primaryKey = 'id';   
 
     protected $fillable = [
         'nama_kategori',

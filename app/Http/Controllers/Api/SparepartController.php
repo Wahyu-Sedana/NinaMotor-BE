@@ -77,8 +77,7 @@ class SparepartController extends Controller
             'nama' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'stok' => 'required|integer|min:0',
-            'harga_beli' => 'required|numeric|min:0',
-            'harga_jual' => 'required|numeric|min:0',
+            'harga' => 'required|numeric|min:0',
             'merk' => 'nullable|string|max:100',
             'gambar_produk' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
@@ -113,8 +112,7 @@ class SparepartController extends Controller
             'nama' => 'sometimes|required|string|max:255',
             'deskripsi' => 'nullable|string',
             'stok' => 'sometimes|required|integer|min:0',
-            'harga_beli' => 'sometimes|required|numeric|min:0',
-            'harga_jual' => 'sometimes|required|numeric|min:0',
+            'harga' => 'sometimes|required|numeric|min:0',
             'merk' => 'nullable|string|max:100',
             'gambar_produk' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);

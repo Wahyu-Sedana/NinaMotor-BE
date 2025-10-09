@@ -54,7 +54,7 @@ class TransaksiController extends Controller
             return [
                 'id' => $item['sparepart_id'] ?? null,
                 'nama' => $item['nama_sparepart'] ?? null,
-                'harga' => isset($item['harga_jual']) ? (float) $item['harga_jual'] : null,
+                'harga' => isset($item['harga']) ? (float) $item['harga'] : null,
                 'quantity' => isset($item['quantity']) ? (int) $item['quantity'] : null,
             ];
         })->toArray();

@@ -39,7 +39,7 @@
                 <h6 class="m-0 font-weight-bold text-primary">Form Edit Pengguna</h6>
             </div>
             <div class="card-body">
-                <form action="{{ route('admin.customer.update', $user->id) }}" method="POST">
+                <form action="{{ route('admin.customer.update', $customer->id) }}" method="POST">
                     @csrf
                     @method('PUT')
 
@@ -47,7 +47,7 @@
                     <div class="mb-3">
                         <label for="nama" class="form-label">Nama <span class="text-danger">*</span></label>
                         <input type="text" class="form-control @error('nama') is-invalid @enderror" id="nama"
-                            name="nama" value="{{ old('nama', $user->nama) }}" placeholder="Masukkan nama pengguna"
+                            name="nama" value="{{ old('nama', $customer->nama) }}" placeholder="Masukkan nama pengguna"
                             required>
                         @error('nama')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -58,7 +58,7 @@
                     <div class="mb-3">
                         <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control @error('email') is-invalid @enderror" id="email"
-                            name="email" value="{{ old('email', $user->email) }}" placeholder="Masukkan alamat email"
+                            name="email" value="{{ old('email', $customer->email) }}" placeholder="Masukkan alamat email"
                             required>
                         @error('email')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -86,7 +86,7 @@
                     <div class="mb-3">
                         <label for="alamat" class="form-label">Alamat</label>
                         <textarea class="form-control @error('alamat') is-invalid @enderror" id="alamat" name="alamat" rows="3"
-                            placeholder="Masukkan alamat pengguna">{{ old('alamat', $user->alamat) }}</textarea>
+                            placeholder="Masukkan alamat pengguna">{{ old('alamat', $customer->alamat) }}</textarea>
                         @error('alamat')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

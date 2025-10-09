@@ -35,11 +35,8 @@ class AdminSparepartDataTable extends DataTable
             ->addColumn('kategori_nama', function ($row) {
                 return $row->kategori ? $row->kategori->nama_kategori : '-';
             })
-            ->addColumn('harga_beli_formatted', function ($row) {
-                return 'Rp ' . number_format($row->harga_beli, 0, ',', '.');
-            })
-            ->addColumn('harga_jual_formatted', function ($row) {
-                return 'Rp ' . number_format($row->harga_jual, 0, ',', '.');
+            ->addColumn('harga_formatted', function ($row) {
+                return 'Rp ' . number_format($row->harga, 0, ',', '.');
             })
             ->addColumn('stok_badge', function ($row) {
                 if ($row->stok <= 0) {
@@ -134,19 +131,13 @@ class AdminSparepartDataTable extends DataTable
                 ->width(100)
                 ->addClass('text-center'),
 
-            Column::computed('harga_beli_formatted')
-                ->title('Harga Beli')
+            Column::computed('harga_formatted')
+                ->title('Harga')
                 ->searchable(false)
                 ->orderable(true)
                 ->width(120)
                 ->addClass('text-end'),
 
-            Column::computed('harga_jual_formatted')
-                ->title('Harga Jual')
-                ->searchable(false)
-                ->orderable(true)
-                ->width(120)
-                ->addClass('text-end'),
 
             Column::computed('kategori_nama')
                 ->title('Kategori')

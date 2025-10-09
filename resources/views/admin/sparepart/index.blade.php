@@ -48,6 +48,34 @@
     </div>
 @endsection
 
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Konfirmasi Hapus
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Apakah Anda yakin ingin menghapus <strong id="itemName"></strong>?</p>
+                <p class="text-muted small mt-1 mb-0">Data yang dihapus tidak dapat dikembalikan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Batal
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i> Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 @push('scripts')
     {!! $dataTable->scripts() !!}
 
@@ -60,42 +88,27 @@
             $(document).on('click', '.btn-delete', function(e) {
                 e.preventDefault();
                 const url = $(this).data('url');
-                const sparepartName = $(this).closest('tr').find('td:nth-child(4)')
-                    .text();
+                const sparepartName = $(this).closest('tr').find('td:nth-child(2)').text();
 
                 Swal.fire({
                     title: 'Apakah Anda yakin?',
-                    html: `Data sparepart <strong>"${sparepartName}"</strong> akan dihapus dan tidak dapat dikembalikan!`,
+                    html: `Sparepart <strong>"${sparepartName}"</strong> akan dihapus dan tidak dapat dikembalikan!`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
                     cancelButtonColor: '#6c757d',
                     confirmButtonText: '<i class="fas fa-trash"></i> Ya, Hapus!',
                     cancelButtonText: '<i class="fas fa-times"></i> Batal',
-                    buttonsStyling: true
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        Swal.fire({
-                            title: 'Menghapus...',
-                            text: 'Sedang memproses penghapusan data',
-                            allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            showConfirmButton: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            }
-                        });
-
                         $.ajaxSetup({
                             headers: {
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             }
                         });
-
                         $.ajax({
                             url: url,
                             type: 'DELETE',
-                            dataType: 'json',
                             success: function(response) {
                                 if (response.success) {
                                     Swal.fire({
@@ -105,38 +118,18 @@
                                         timer: 2000,
                                         showConfirmButton: false
                                     });
-                                    $('#sparepart-table').DataTable().ajax.reload(null,
-                                        false);
+                                    $('#sparepart-table').DataTable().ajax
+                                        .reload(null, false);
                                 } else {
-                                    Swal.fire({
-                                        title: 'Gagal!',
-                                        text: response.message ||
-                                            'Terjadi kesalahan saat menghapus data',
-                                        icon: 'error'
-                                    });
+                                    Swal.fire('Gagal!', response.message, 'error');
                                 }
                             },
-                            error: function(xhr, status, error) {
-                                let message = 'Terjadi kesalahan saat menghapus data';
-
+                            error: function(xhr) {
+                                let msg = 'Terjadi kesalahan saat menghapus data';
                                 if (xhr.responseJSON && xhr.responseJSON.message) {
-                                    message = xhr.responseJSON.message;
-                                } else if (xhr.status === 404) {
-                                    message = 'Data tidak ditemukan';
-                                } else if (xhr.status === 403) {
-                                    message =
-                                        'Anda tidak memiliki akses untuk menghapus data ini';
-                                } else if (xhr.status === 500) {
-                                    message =
-                                        'Terjadi kesalahan server. Silakan coba lagi.';
+                                    msg = xhr.responseJSON.message;
                                 }
-
-                                Swal.fire({
-                                    title: 'Error!',
-                                    text: message,
-                                    icon: 'error',
-                                    confirmButtonText: 'OK'
-                                });
+                                Swal.fire('Error!', msg, 'error');
                             }
                         });
                     }

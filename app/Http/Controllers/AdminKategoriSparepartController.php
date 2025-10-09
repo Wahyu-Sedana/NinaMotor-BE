@@ -110,36 +110,36 @@ class AdminKategoriSparepartController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(KategoriSparepart $kategoriSparepart)
+    public function show(KategoriSparepart $kategori_sparepart)
     {
-        $kategoriSparepart->load(['spareparts' => function ($query) {
+        $kategori_sparepart->load(['spareparts' => function ($query) {
             $query->select('id', 'kode_sparepart', 'nama_sparepart', 'merk', 'stok', 'kategori_id');
         }]);
 
         return view('admin.kategori-sparepart.show', [
             'title' => 'Detail Kategori Sparepart',
-            'kategori' => $kategoriSparepart
+            'kategori' => $kategori_sparepart
         ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(KategoriSparepart $kategoriSparepart)
+    public function edit(KategoriSparepart $kategori_sparepart)
     {
         return view('admin.kategori-sparepart.edit', [
             'title' => 'Edit Kategori Sparepart',
-            'kategori' => $kategoriSparepart
+            'kategori' => $kategori_sparepart
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, KategoriSparepart $kategoriSparepart)
+    public function update(Request $request, KategoriSparepart $kategori_sparepart)
     {
         $validator = Validator::make($request->all(), [
-            'nama_kategori' => 'required|string|max:100|unique:tb_kategori_sparepart,nama_kategori,' . $kategoriSparepart->id,
+            'nama_kategori' => 'required|string|max:100|unique:tb_kategori_sparepart,nama_kategori,' . $kategori_sparepart->id,
             'deskripsi' => 'nullable|string|max:500'
         ], [
             'nama_kategori.required' => 'Nama kategori wajib diisi.',
@@ -165,9 +165,9 @@ class AdminKategoriSparepartController extends Controller
         try {
             DB::beginTransaction();
 
-            $oldData = $kategoriSparepart->toArray();
+            $oldData = $kategori_sparepart->toArray();
 
-            $kategoriSparepart->update([
+            $kategori_sparepart->update([
                 'nama_kategori' => $request->nama_kategori,
                 'deskripsi' => $request->deskripsi
             ]);
@@ -175,9 +175,9 @@ class AdminKategoriSparepartController extends Controller
             DB::commit();
 
             Log::info('Kategori sparepart updated', [
-                'id' => $kategoriSparepart->id,
+                'id' => $kategori_sparepart->id,
                 'old_data' => $oldData,
-                'new_data' => $kategoriSparepart->fresh()->toArray(),
+                'new_data' => $kategori_sparepart->fresh()->toArray(),
                 'user' => auth()->user()->name ?? 'Unknown'
             ]);
 
@@ -185,7 +185,7 @@ class AdminKategoriSparepartController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Kategori berhasil diperbarui',
-                    'data' => $kategoriSparepart
+                    'data' => $kategori_sparepart
                 ]);
             }
 
@@ -195,7 +195,7 @@ class AdminKategoriSparepartController extends Controller
             DB::rollback();
 
             Log::error('Error updating kategori sparepart', [
-                'id' => $kategoriSparepart->id,
+                'id' => $kategori_sparepart->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -216,28 +216,35 @@ class AdminKategoriSparepartController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(KategoriSparepart $kategoriSparepart)
+    public function destroy($id)
     {
         try {
-            // Cek apakah kategori masih digunakan
-            $jumlahSparepart = $kategoriSparepart->spareparts()->count();
+            $kategori_sparepart = KategoriSparepart::find($id);
+
+            if (!$kategori_sparepart) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kategori tidak ditemukan'
+                ], 404);
+            }
+
+            $jumlahSparepart = $kategori_sparepart->spareparts()->count();
 
             if ($jumlahSparepart > 0) {
-                if (request()->expectsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Kategori tidak dapat dihapus karena masih digunakan oleh {$jumlahSparepart} sparepart."
-                    ], 409);
-                }
-
-                return redirect()->back()
-                    ->with('error', "Kategori tidak dapat dihapus karena masih digunakan oleh {$jumlahSparepart} sparepart.");
+                return response()->json([
+                    'success' => false,
+                    'message' => "Kategori tidak dapat dihapus karena masih digunakan oleh {$jumlahSparepart} sparepart."
+                ], 409);
             }
 
             DB::beginTransaction();
 
-            $kategoriData = $kategoriSparepart->toArray();
-            $kategoriSparepart->delete();
+            $kategoriData = [
+                'id' => $kategori_sparepart->id,
+                'nama_kategori' => $kategori_sparepart->nama_kategori
+            ];
+
+            $kategori_sparepart->delete();
 
             DB::commit();
 
@@ -246,33 +253,23 @@ class AdminKategoriSparepartController extends Controller
                 'user' => auth()->user()->name ?? 'Unknown'
             ]);
 
-            if (request()->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Kategori berhasil dihapus'
-                ]);
-            }
-
-            return redirect()->route('admin.kategori-sparepart.index')
-                ->with('success', 'Kategori sparepart berhasil dihapus.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Kategori berhasil dihapus'
+            ]);
         } catch (\Exception $e) {
             DB::rollback();
 
             Log::error('Error deleting kategori sparepart', [
-                'id' => $kategoriSparepart->id,
+                'id' => $id ?? 'NULL',
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
-            if (request()->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Terjadi kesalahan saat menghapus data'
-                ], 500);
-            }
-
-            return redirect()->back()
-                ->with('error', 'Terjadi kesalahan saat menghapus data.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menghapus data'
+            ], 500);
         }
     }
 }

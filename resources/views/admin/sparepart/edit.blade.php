@@ -109,37 +109,17 @@
                     </div>
 
                     <div class="row">
-                        {{-- Harga Beli --}}
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="harga_beli" class="form-label">Harga Beli <span
-                                        class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text">Rp</span>
-                                    <input type="number" class="form-control @error('harga_beli') is-invalid @enderror"
-                                        id="harga_beli" name="harga_beli"
-                                        value="{{ old('harga_beli', $sparepart->harga_beli) }}" placeholder="0"
-                                        min="0" step="0.01" required>
-                                </div>
-                                @error('harga_beli')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
                         {{-- Harga Jual --}}
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="harga_jual" class="form-label">Harga Jual <span
-                                        class="text-danger">*</span></label>
+                                <label for="harga" class="form-label">Harga <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text">Rp</span>
-                                    <input type="number" class="form-control @error('harga_jual') is-invalid @enderror"
-                                        id="harga_jual" name="harga_jual"
-                                        value="{{ old('harga_jual', $sparepart->harga_jual) }}" placeholder="0"
-                                        min="0" step="0.01" required>
+                                    <input type="number" class="form-control @error('harga') is-invalid @enderror"
+                                        id="harga" name="harga" value="{{ old('harga', $sparepart->harga) }}"
+                                        placeholder="0" min="0" step="0.01" required>
                                 </div>
-                                @error('harga_jual')
+                                @error('harga')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -245,7 +225,6 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            // Preview gambar saat file dipilih
             $('#gambar_produk').on('change', function() {
                 const file = this.files[0];
                 const preview = $('#image-preview');
@@ -259,7 +238,6 @@
                     }
                     reader.readAsDataURL(file);
                 } else {
-                    // Kembalikan ke gambar asli jika ada
                     @if ($sparepart->gambar_produk)
                         preview.attr('src', '{{ Storage::url($sparepart->gambar_produk) }}').show();
                         noImage.hide();
@@ -270,20 +248,16 @@
                 }
             });
 
-            // Calculate profit margin
             function calculateProfitMargin() {
-                const hargaBeli = parseFloat($('#harga_beli').val()) || 0;
-                const hargaJual = parseFloat($('#harga_jual').val()) || 0;
+                const hargaJual = parseFloat($('#harga').val()) || 0;
 
                 if (hargaBeli > 0 && hargaJual > 0) {
                     const profit = hargaJual - hargaBeli;
                     const margin = ((profit / hargaBeli) * 100).toFixed(1);
-
-                    // Show profit info
                     let profitInfo = $('#profit-info');
                     if (profitInfo.length === 0) {
                         profitInfo = $('<small id="profit-info" class="form-text"></small>');
-                        $('#harga_jual').parent().parent().append(profitInfo);
+                        $('#harga').parent().parent().append(profitInfo);
                     }
 
                     if (profit >= 0) {
@@ -297,24 +271,9 @@
                     }
                 }
             }
-
-            $('#harga_beli, #harga_jual').on('input', calculateProfitMargin);
-
-            // Initial calculation
             calculateProfitMargin();
-
-            // Format number input dengan separator
-            $('#harga_beli, #harga_jual').on('blur', function() {
-                const value = parseFloat($(this).val());
-                if (!isNaN(value)) {
-                    $(this).val(value.toFixed(0));
-                }
-            });
-
-            // Konfirmasi sebelum submit
             $('form').on('submit', function(e) {
-                const hargaBeli = parseFloat($('#harga_beli').val()) || 0;
-                const hargaJual = parseFloat($('#harga_jual').val()) || 0;
+                const hargaJual = parseFloat($('#harga').val()) || 0;
 
                 if (hargaJual < hargaBeli) {
                     e.preventDefault();

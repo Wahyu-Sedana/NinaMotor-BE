@@ -20,8 +20,7 @@ class Sparepart extends Model
         'nama_sparepart',
         'deskripsi',
         'stok',
-        'harga_beli',
-        'harga_jual',
+        'harga',
         'merk',
         'gambar_produk',
     ];
