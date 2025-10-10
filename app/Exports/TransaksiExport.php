@@ -31,7 +31,7 @@ class TransaksiExport implements FromCollection, WithHeadings, WithStyles, WithE
 
     public function collection(): Collection
     {
-        $query = Transaksi::with('user')
+        $query = Transaksi::with(['user', 'alamatPengiriman'])
             ->whereYear('tanggal_transaksi', $this->tahun)
             ->whereHas('user', function ($q) {
                 $q->where('role', 'customer');
@@ -61,6 +61,8 @@ class TransaksiExport implements FromCollection, WithHeadings, WithStyles, WithE
         $this->data = $query->get();
 
         return $this->data->map(function ($item, $i) {
+            $alamat = $item->alamatPengiriman;
+
             return [
                 'No' => $i + 1,
                 'Nama User' => $item->user->nama ?? '-',
@@ -68,13 +70,36 @@ class TransaksiExport implements FromCollection, WithHeadings, WithStyles, WithE
                 'Metode Pembayaran' => ucfirst($item->metode_pembayaran),
                 'Total' => $item->total ?? 0,
                 'Tanggal Transaksi' => Carbon::parse($item->tanggal_transaksi)->format('d M Y'),
+                'Type Pembelian' => ucfirst($item->type_pembelian ?? '-'),
+                'Nama Penerima' => $alamat->nama_penerima ?? '-',
+                'No Telp Penerima' => $alamat->no_telp_penerima ?? '-',
+                'Alamat Lengkap' => $alamat->alamat_lengkap ?? '-',
+                'Kurir' => strtoupper($item->kurir ?? '-'),
+                'Service' => $item->service ?? '-',
+                'Ongkir' => $item->ongkir ?? 0,
+                'Estimasi' => $item->estimasi ?? '-',
             ];
         });
     }
 
     public function headings(): array
     {
-        return ['No', 'Nama User', 'Status Pembayaran', 'Metode Pembayaran', 'Total', 'Tanggal Transaksi'];
+        return [
+            'No',
+            'Nama User',
+            'Status Pembayaran',
+            'Metode Pembayaran',
+            'Total',
+            'Tanggal Transaksi',
+            'Type Pembelian',
+            'Nama Penerima',
+            'No Telp Penerima',
+            'Alamat Lengkap',
+            'Kurir',
+            'Service',
+            'Ongkir',
+            'Estimasi'
+        ];
     }
 
     public function styles(Worksheet $sheet)
@@ -109,7 +134,7 @@ class TransaksiExport implements FromCollection, WithHeadings, WithStyles, WithE
                 }
 
                 $event->sheet->setCellValue('A1', $title);
-                $event->sheet->mergeCells('A1:F1');
+                $event->sheet->mergeCells('A1:R1');
                 $event->sheet->getDelegate()->getStyle('A1')->getFont()->setBold(true)->setSize(14);
                 $event->sheet->getDelegate()->getStyle('A1')->getAlignment()->setHorizontal('center');
             },
@@ -121,6 +146,7 @@ class TransaksiExport implements FromCollection, WithHeadings, WithStyles, WithE
                 $bankTotal = $this->data->where('metode_pembayaran', 'bank_transfer')->sum('total');
                 $cashTotal = $this->data->where('metode_pembayaran', 'cash')->sum('total');
                 $grandTotal = $this->data->sum('total');
+                $totalOngkir = $this->data->sum('ongkir');
 
                 $totalCount = $this->data->count();
 
@@ -128,24 +154,33 @@ class TransaksiExport implements FromCollection, WithHeadings, WithStyles, WithE
 
                 $sheet = $event->sheet->getDelegate();
 
-                $sheet->setCellValue("D" . ($lastRow + 1), "Total Bank Transfer");
-                $sheet->setCellValue("E" . ($lastRow + 1), $bankCount . " transaksi");
-                $sheet->setCellValue("F" . ($lastRow + 1), "Rp " . number_format($bankTotal, 0, ',', '.'));
+                $sheet->setCellValue("P" . ($lastRow + 1), "Total Bank Transfer");
+                $sheet->setCellValue("Q" . ($lastRow + 1), $bankCount . " transaksi");
+                $sheet->setCellValue("R" . ($lastRow + 1), "Rp " . number_format($bankTotal, 0, ',', '.'));
 
-                $sheet->setCellValue("D" . ($lastRow + 2), "Total Cash");
-                $sheet->setCellValue("E" . ($lastRow + 2), $cashCount . " transaksi");
-                $sheet->setCellValue("F" . ($lastRow + 2), "Rp " . number_format($cashTotal, 0, ',', '.'));
+                $sheet->setCellValue("P" . ($lastRow + 2), "Total Cash");
+                $sheet->setCellValue("Q" . ($lastRow + 2), $cashCount . " transaksi");
+                $sheet->setCellValue("R" . ($lastRow + 2), "Rp " . number_format($cashTotal, 0, ',', '.'));
 
-                $sheet->setCellValue("D" . ($lastRow + 3), "Total Semua");
-                $sheet->setCellValue("E" . ($lastRow + 3), $totalCount . " transaksi");
-                $sheet->setCellValue("F" . ($lastRow + 3), "Rp " . number_format($grandTotal, 0, ',', '.'));
+                $sheet->setCellValue("P" . ($lastRow + 3), "Total Ongkir");
+                $sheet->setCellValue("Q" . ($lastRow + 3), "-");
+                $sheet->setCellValue("R" . ($lastRow + 3), "Rp " . number_format($totalOngkir, 0, ',', '.'));
 
-                $sheet->getStyle("D" . ($lastRow + 1) . ":D" . ($lastRow + 3))->getFont()->setBold(true);
-                $sheet->getStyle("E" . ($lastRow + 1) . ":F" . ($lastRow + 3))->getFont()->setBold(true);
+                $sheet->setCellValue("P" . ($lastRow + 4), "Total Semua");
+                $sheet->setCellValue("Q" . ($lastRow + 4), $totalCount . " transaksi");
+                $sheet->setCellValue("R" . ($lastRow + 4), "Rp " . number_format($grandTotal, 0, ',', '.'));
 
-                $sheet->getStyle("D" . ($lastRow + 3) . ":F" . ($lastRow + 3))->getFill()
+                $sheet->getStyle("P" . ($lastRow + 1) . ":P" . ($lastRow + 4))->getFont()->setBold(true);
+                $sheet->getStyle("Q" . ($lastRow + 1) . ":R" . ($lastRow + 4))->getFont()->setBold(true);
+
+                $sheet->getStyle("P" . ($lastRow + 4) . ":R" . ($lastRow + 4))->getFill()
                     ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
                     ->getStartColor()->setARGB('FFFFEB3B');
+
+                // Auto-size columns
+                foreach (range('A', 'R') as $col) {
+                    $sheet->getColumnDimension($col)->setAutoSize(true);
+                }
             },
         ];
     }

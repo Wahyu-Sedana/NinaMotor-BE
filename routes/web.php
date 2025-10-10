@@ -100,13 +100,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::post('kategori-sparepart', [AdminKategoriSparepartController::class, 'store'])
         ->name('kategori-sparepart.store');
 
-    Route::get('kategori-sparepart/{id}', [AdminKategoriSparepartController::class, 'show'])
-        ->name('kategori-sparepart.show');
-
-    Route::get('kategori-sparepart/{id}/edit', [AdminKategoriSparepartController::class, 'edit'])
+    Route::get('kategori-sparepart/{kategori_sparepart}/edit', [AdminKategoriSparepartController::class, 'edit'])
         ->name('kategori-sparepart.edit');
 
-    Route::put('kategori-sparepart/{id}', [AdminKategoriSparepartController::class, 'update'])
+    Route::put('kategori-sparepart/{kategori_sparepart}', [AdminKategoriSparepartController::class, 'update'])
         ->name('kategori-sparepart.update');
 
     Route::delete('kategori-sparepart/{id}', [AdminKategoriSparepartController::class, 'destroy'])
