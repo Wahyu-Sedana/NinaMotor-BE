@@ -158,6 +158,13 @@ class AdminServisMotorController extends Controller
 
             DB::commit();
 
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data servis motor berhasil dihapus'
+                ]);
+            }
+
             return redirect()->route('admin.servis.index')
                 ->with('success', 'Data servis motor berhasil dihapus');
         } catch (\Exception $e) {
