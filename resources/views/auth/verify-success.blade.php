@@ -142,7 +142,6 @@
             </div>
         @endif
 
-        <a href="myapp://login" class="button">Buka Aplikasi</a>
 
         <p style="margin-top: 30px; font-size: 14px; color: #999;">
             Anda dapat menutup halaman ini dan kembali ke aplikasi.

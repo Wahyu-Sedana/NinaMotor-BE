@@ -147,11 +147,6 @@
         <h1>{{ $title }}</h1>
         <p>{{ $message }}</p>
 
-        <div>
-            <a href="myapp://login" class="button">Buka Aplikasi</a>
-            <a href="{{ url('/api/resend-verification') }}" class="button button-secondary">Kirim Ulang Email</a>
-        </div>
-
         <p style="margin-top: 30px; font-size: 14px; color: #999;">
             Jika masalah berlanjut, silakan hubungi customer service kami.
         </p>
