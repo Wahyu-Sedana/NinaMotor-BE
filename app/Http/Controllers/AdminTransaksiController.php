@@ -91,20 +91,30 @@ class AdminTransaksiController extends Controller
                 'status_pembayaran' => $request->status_pembayaran
             ]);
 
-            if ($transaksi->type_pembelian == 1 && $request->status_pembayaran == 'berhasil') {
-                $servis = \App\Models\ServisMotor::where('transaksi_id', $transaksi->id)->first();
+            // Jika status berhasil dan sebelumnya bukan berhasil
+            if ($request->status_pembayaran === 'berhasil' && $oldStatus !== 'berhasil') {
 
-                if ($servis) {
-                    $servis->update([
-                        'status' => 'done'
-                    ]);
+                // Kurangi stok untuk pembelian sparepart (type_pembelian = 0)
+                if ($transaksi->type_pembelian == 0) {
+                    $this->reduceProductStock($transaksi);
+                }
 
-                    $this->sendFirebaseNotification($servis, 'done');
+                // Update status servis jika type_pembelian = 1 (servis motor)
+                if ($transaksi->type_pembelian == 1) {
+                    $servis = \App\Models\ServisMotor::where('transaksi_id', $transaksi->id)->first();
 
-                    Log::info('Servis status auto-updated to done', [
-                        'servis_id' => $servis->id,
-                        'transaksi_id' => $transaksi->id
-                    ]);
+                    if ($servis) {
+                        $servis->update([
+                            'status' => 'done'
+                        ]);
+
+                        $this->sendFirebaseNotification($servis, 'done');
+
+                        Log::info('Servis status auto-updated to done', [
+                            'servis_id' => $servis->id,
+                            'transaksi_id' => $transaksi->id
+                        ]);
+                    }
                 }
             }
 
@@ -146,6 +156,72 @@ class AdminTransaksiController extends Controller
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat memperbarui status.')
                 ->withInput();
+        }
+    }
+
+    /**
+     * Kurangi stok produk berdasarkan items dalam transaksi
+     */
+    private function reduceProductStock($transaksi)
+    {
+        try {
+            // Decode items dari transaksi
+            $items = json_decode($transaksi->items_data, true);
+
+            if (!$items || !is_array($items)) {
+                Log::warning('No items found in transaction', ['transaksi_id' => $transaksi->id]);
+                return;
+            }
+
+            foreach ($items as $item) {
+                $sparepartId = $item['id'] ?? null;
+                $quantity = $item['quantity'] ?? 0;
+
+                if (!$sparepartId || $quantity <= 0) {
+                    continue;
+                }
+
+                // Update stok sparepart
+                // Gunakan model Sparepart jika ada, atau sesuaikan dengan nama tabel Anda
+                $sparepart = \App\Models\Sparepart::find($sparepartId);
+
+                if ($sparepart) {
+                    if ($sparepart->stok >= $quantity) {
+                        $sparepart->decrement('stok', $quantity);
+
+                        Log::info('Stock reduced successfully', [
+                            'transaksi_id' => $transaksi->id,
+                            'sparepart_id' => $sparepartId,
+                            'sparepart_name' => $item['nama'] ?? 'Unknown',
+                            'quantity_reduced' => $quantity,
+                            'remaining_stock' => $sparepart->fresh()->stok
+                        ]);
+                    } else {
+                        Log::warning('Insufficient stock for product', [
+                            'transaksi_id' => $transaksi->id,
+                            'sparepart_id' => $sparepartId,
+                            'sparepart_name' => $item['nama'] ?? 'Unknown',
+                            'required' => $quantity,
+                            'available' => $sparepart->stok
+                        ]);
+                    }
+                } else {
+                    Log::warning('Sparepart not found', [
+                        'transaksi_id' => $transaksi->id,
+                        'sparepart_id' => $sparepartId
+                    ]);
+                }
+            }
+
+            Log::info('Product stock reduction completed for transaction', [
+                'transaksi_id' => $transaksi->id,
+                'total_items' => count($items)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to reduce product stock: ' . $e->getMessage(), [
+                'transaksi_id' => $transaksi->id,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 

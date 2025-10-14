@@ -307,6 +307,11 @@ class TransaksiController extends Controller
             }
 
             $transaksi->save();
+            if ($transaksi->status_pembayaran === 'berhasil' && $oldStatus !== 'berhasil') {
+                if ($transaksi->type_pembelian == 0) {
+                    $this->reduceProductStock($transaksi);
+                }
+            }
 
             if ($oldStatus !== $transaksi->status_pembayaran) {
                 $this->sendFirebaseNotification($transaksi, $notif);
@@ -322,6 +327,68 @@ class TransaksiController extends Controller
         } catch (\Exception $e) {
             Log::error('Callback processing failed: ' . $e->getMessage());
             return response()->json(['message' => 'Callback processing failed'], 500);
+        }
+    }
+
+    /**
+     * Kurangi stok produk berdasarkan items dalam transaksi
+     */
+    private function reduceProductStock($transaksi)
+    {
+        try {
+            $items = json_decode($transaksi->items_data, true);
+
+            if (!$items || !is_array($items)) {
+                Log::warning('No items found in transaction', ['transaksi_id' => $transaksi->id]);
+                return;
+            }
+
+            foreach ($items as $item) {
+                $sparepartId = $item['id'] ?? null;
+                $quantity = $item['quantity'] ?? 0;
+
+                if (!$sparepartId || $quantity <= 0) {
+                    continue;
+                }
+                $sparepart = \App\Models\Sparepart::find($sparepartId);
+
+                if ($sparepart) {
+                    if ($sparepart->stok >= $quantity) {
+                        $sparepart->decrement('stok', $quantity);
+
+                        Log::info('Stock reduced successfully', [
+                            'transaksi_id' => $transaksi->id,
+                            'sparepart_id' => $sparepartId,
+                            'sparepart_name' => $item['nama'] ?? 'Unknown',
+                            'quantity_reduced' => $quantity,
+                            'remaining_stock' => $sparepart->fresh()->stok
+                        ]);
+                    } else {
+                        Log::warning('Insufficient stock for product', [
+                            'transaksi_id' => $transaksi->id,
+                            'sparepart_id' => $sparepartId,
+                            'sparepart_name' => $item['nama'] ?? 'Unknown',
+                            'required' => $quantity,
+                            'available' => $sparepart->stok
+                        ]);
+                    }
+                } else {
+                    Log::warning('Sparepart not found', [
+                        'transaksi_id' => $transaksi->id,
+                        'sparepart_id' => $sparepartId
+                    ]);
+                }
+            }
+
+            Log::info('Product stock reduction completed for transaction', [
+                'transaksi_id' => $transaksi->id,
+                'total_items' => count($items)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to reduce product stock: ' . $e->getMessage(), [
+                'transaksi_id' => $transaksi->id,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
