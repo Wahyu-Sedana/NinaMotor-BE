@@ -36,7 +36,13 @@ class AdminDataCustomerDataTable extends DataTable
             ->addColumn('action', function ($row) {
                 return view('admin.customer.action', compact('row'));
             })
-            ->rawColumns(['action'])
+            ->addColumn('status', function ($row) {
+                if ($row->email_verified_at) {
+                    return '<span class="badge bg-success">Terverifikasi</span>';
+                }
+                return '<span class="badge bg-danger">Belum Verifikasi</span>';
+            })
+            ->rawColumns(['action', 'status'])
             ->setRowId('id');
     }
 
@@ -104,6 +110,13 @@ class AdminDataCustomerDataTable extends DataTable
                 ->title('No Telp')
                 ->searchable(false)
                 ->orderable(true)
+                ->width(120)
+                ->addClass('text-center'),
+
+            Column::computed('status')
+                ->title('Status')
+                ->orderable(false)
+                ->searchable(false)
                 ->width(120)
                 ->addClass('text-center'),
 
