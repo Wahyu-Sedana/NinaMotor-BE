@@ -120,7 +120,6 @@ class UsersController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nama'           => 'nullable|string|max:255',
-            'alamat'         => 'nullable|string',
             'no_telp'        => 'nullable|string|max:13',
             'profile'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
@@ -139,9 +138,6 @@ class UsersController extends Controller
             if ($request->has('nama')) {
                 $user->nama = $request->nama;
             }
-            if ($request->has('alamat')) {
-                $user->alamat = $request->alamat;
-            }
             if ($request->has('no_telp')) {
                 $user->no_telp = $request->no_telp;
             }
@@ -157,7 +153,6 @@ class UsersController extends Controller
                 'email' => $user->email,
                 'updated_fields' => array_keys($request->only([
                     'nama',
-                    'alamat',
                     'no_telp',
                     'profile',
                 ]))
