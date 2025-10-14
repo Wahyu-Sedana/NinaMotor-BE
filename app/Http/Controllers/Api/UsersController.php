@@ -180,6 +180,7 @@ class UsersController extends Controller
             'nama'           => 'required|string|max:255',
             'email'          => 'required|string|email|unique:tb_users,email',
             'password'       => 'required|string|min:6|confirmed',
+            'no_telp'       => 'required|string|13',
             'role'           => 'nullable|string',
             'fcm_token'      => 'nullable|string',
         ]);
@@ -201,6 +202,7 @@ class UsersController extends Controller
                 'email'                     => $request->email,
                 'password'                  => Hash::make($request->password),
                 'role'                      => $request->role ?? 'customer',
+                'no_telp'                   => $request->no_telp,
                 'fcm_token'                 => $request->fcm_token,
                 'email_verification_token'  => $verificationToken,
                 'email_verified_at'         => null,
