@@ -420,7 +420,7 @@ class TransaksiController extends Controller
                 if (!$sparepartId) {
                     continue;
                 }
-                $deleted = DB::table('carts')
+                $deleted = DB::table('tb_carts')
                     ->where('user_id', $userId)
                     ->where('sparepart_id', $sparepartId)
                     ->delete();
