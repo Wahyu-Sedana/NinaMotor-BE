@@ -47,12 +47,12 @@ class AdminTransactionDataTable extends DataTable
                 }
                 return '-';
             })
-            ->addColumn('no_telp_penerima', function ($row) {
-                if ($row->alamatPengiriman) {
-                    return $row->alamatPengiriman->no_telp_penerima;
-                }
-                return '-';
-            })
+            // ->addColumn('no_telp_penerima', function ($row) {
+            //     if ($row->alamatPengiriman) {
+            //         return $row->alamatPengiriman->no_telp_penerima;
+            //     }
+            //     return '-';
+            // })
             ->addColumn('alamat_lengkap', function ($row) {
                 if ($row->alamatPengiriman) {
                     $alamat = $row->alamatPengiriman;
@@ -183,9 +183,9 @@ class AdminTransactionDataTable extends DataTable
                 ->title('Penerima')
                 ->width(150),
 
-            Column::computed('no_telp_penerima')
-                ->title('No. Telepon')
-                ->width(120),
+            // Column::computed('no_telp_penerima')
+            //     ->title('No. Telepon')
+            //     ->width(120),
 
             Column::computed('alamat_lengkap')
                 ->title('Alamat Lengkap')
