@@ -180,7 +180,7 @@ class UsersController extends Controller
             'nama'           => 'required|string|max:255',
             'email'          => 'required|string|email|unique:tb_users,email',
             'password'       => 'required|string|min:6|confirmed',
-            'no_telp'       => 'required|string|13',
+            'no_telp'       => 'required|string|max:13',
             'role'           => 'nullable|string',
             'fcm_token'      => 'nullable|string',
         ]);
