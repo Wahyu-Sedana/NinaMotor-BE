@@ -242,7 +242,7 @@ class AdminTransaksiController extends Controller
             $deletedCount = 0;
 
             foreach ($items as $item) {
-                $sparepartId = $item['id'] ?? null;
+                $sparepartId = $item['sparepart_id'] ?? null;
 
                 if (!$sparepartId) {
                     continue;
@@ -259,7 +259,6 @@ class AdminTransaksiController extends Controller
                         'transaksi_id' => $transaksi->id,
                         'user_id' => $userId,
                         'sparepart_id' => $sparepartId,
-                        'sparepart_name' => $item['nama'] ?? 'Unknown'
                     ]);
                 }
             }
@@ -267,7 +266,7 @@ class AdminTransaksiController extends Controller
             Log::info('Cart cleared after purchase', [
                 'transaksi_id' => $transaksi->id,
                 'user_id' => $userId,
-                'items_deleted' => $deletedCount
+                'items_deleted' => $deletedCount,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to clear cart after purchase: ' . $e->getMessage(), [
@@ -276,6 +275,7 @@ class AdminTransaksiController extends Controller
             ]);
         }
     }
+
 
     private function sendFirebaseNotification(ServisMotor $servisMotor, string $newStatus)
     {

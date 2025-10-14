@@ -415,11 +415,12 @@ class TransaksiController extends Controller
             $deletedCount = 0;
 
             foreach ($items as $item) {
-                $sparepartId = $item['id'] ?? null;
+                $sparepartId = $item['sparepart_id'] ?? null;
 
                 if (!$sparepartId) {
                     continue;
                 }
+
                 $deleted = DB::table('tb_carts')
                     ->where('user_id', $userId)
                     ->where('sparepart_id', $sparepartId)
@@ -431,7 +432,6 @@ class TransaksiController extends Controller
                         'transaksi_id' => $transaksi->id,
                         'user_id' => $userId,
                         'sparepart_id' => $sparepartId,
-                        'sparepart_name' => $item['nama'] ?? 'Unknown'
                     ]);
                 }
             }
@@ -439,7 +439,7 @@ class TransaksiController extends Controller
             Log::info('Cart cleared after purchase', [
                 'transaksi_id' => $transaksi->id,
                 'user_id' => $userId,
-                'items_deleted' => $deletedCount
+                'items_deleted' => $deletedCount,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to clear cart after purchase: ' . $e->getMessage(), [
@@ -448,6 +448,7 @@ class TransaksiController extends Controller
             ]);
         }
     }
+
 
     public function getTransactionList(Request $request)
     {
