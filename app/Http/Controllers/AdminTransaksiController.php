@@ -94,9 +94,10 @@ class AdminTransaksiController extends Controller
             // Jika status berhasil dan sebelumnya bukan berhasil
             if ($request->status_pembayaran === 'berhasil' && $oldStatus !== 'berhasil') {
 
-                // Kurangi stok untuk pembelian sparepart (type_pembelian = 0)
+                // Kurangi stok dan hapus cart untuk pembelian sparepart (type_pembelian = 0)
                 if ($transaksi->type_pembelian == 0) {
                     $this->reduceProductStock($transaksi);
+                    $this->clearCartAfterPurchase($transaksi);
                 }
 
                 // Update status servis jika type_pembelian = 1 (servis motor)
@@ -182,7 +183,6 @@ class AdminTransaksiController extends Controller
                 }
 
                 // Update stok sparepart
-                // Gunakan model Sparepart jika ada, atau sesuaikan dengan nama tabel Anda
                 $sparepart = \App\Models\Sparepart::find($sparepartId);
 
                 if ($sparepart) {
@@ -219,6 +219,58 @@ class AdminTransaksiController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to reduce product stock: ' . $e->getMessage(), [
+                'transaksi_id' => $transaksi->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    /**
+     * Hapus item dari cart setelah pembelian berhasil
+     */
+    private function clearCartAfterPurchase($transaksi)
+    {
+        try {
+            $items = json_decode($transaksi->items_data, true);
+
+            if (!$items || !is_array($items)) {
+                Log::warning('No items to clear from cart', ['transaksi_id' => $transaksi->id]);
+                return;
+            }
+
+            $userId = $transaksi->user_id;
+            $deletedCount = 0;
+
+            foreach ($items as $item) {
+                $sparepartId = $item['id'] ?? null;
+
+                if (!$sparepartId) {
+                    continue;
+                }
+
+                $deleted = DB::table('carts')
+                    ->where('user_id', $userId)
+                    ->where('sparepart_id', $sparepartId)
+                    ->delete();
+
+                if ($deleted > 0) {
+                    $deletedCount += $deleted;
+                    Log::info('Cart item deleted', [
+                        'transaksi_id' => $transaksi->id,
+                        'user_id' => $userId,
+                        'sparepart_id' => $sparepartId,
+                        'sparepart_name' => $item['nama'] ?? 'Unknown'
+                    ]);
+                }
+            }
+
+            Log::info('Cart cleared after purchase', [
+                'transaksi_id' => $transaksi->id,
+                'user_id' => $userId,
+                'items_deleted' => $deletedCount
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to clear cart after purchase: ' . $e->getMessage(), [
                 'transaksi_id' => $transaksi->id,
                 'trace' => $e->getTraceAsString()
             ]);
