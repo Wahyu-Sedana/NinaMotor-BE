@@ -30,8 +30,8 @@ class AdminDataCustomerDataTable extends DataTable
             ->editColumn('email', function ($row) {
                 return $row->email ?? '-';
             })
-            ->editColumn('alamat', function ($row) {
-                return $row->alamat ?? '-';
+            ->editColumn('no_telp', function ($row) {
+                return $row->no_telp ?? '-';
             })
             ->addColumn('action', function ($row) {
                 return view('admin.customer.action', compact('row'));
@@ -100,8 +100,8 @@ class AdminDataCustomerDataTable extends DataTable
                 ->title('Email')
                 ->orderable(false),
 
-            Column::computed('alamat')
-                ->title('Alamat')
+            Column::computed('no_telp')
+                ->title('No Telp')
                 ->searchable(false)
                 ->orderable(true)
                 ->width(120)
