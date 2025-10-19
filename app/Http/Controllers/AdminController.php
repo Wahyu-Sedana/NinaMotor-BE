@@ -6,6 +6,7 @@ use App\Models\ServisMotor;
 use App\Models\Sparepart;
 use App\Models\Transaksi;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -59,11 +60,13 @@ class AdminController extends Controller
         }
 
         $recentTransaksi = Transaksi::with('user')
+            ->whereDate('created_at', Carbon::today())
             ->latest()
             ->take(5)
             ->get();
 
         $recentServis = ServisMotor::with('user')
+            ->whereDate('created_at', Carbon::today())
             ->latest()
             ->take(5)
             ->get();
