@@ -99,6 +99,7 @@ class AdminTransaksiController extends Controller
                 if ($transaksi->type_pembelian == 0) {
                     $this->reduceProductStock($transaksi);
                     $this->clearCartAfterPurchase($transaksi);
+                    $this->sendSparepartPurchaseNotification($transaksi);
                 }
 
                 // Update status servis jika type_pembelian = 1 (servis motor)
@@ -183,7 +184,6 @@ class AdminTransaksiController extends Controller
                     continue;
                 }
 
-                // Update stok sparepart
                 $sparepart = \App\Models\Sparepart::find($sparepartId);
 
                 if ($sparepart) {
@@ -241,8 +241,13 @@ class AdminTransaksiController extends Controller
 
             $userId = $transaksi->user_id;
 
+            $purchasedIds = array_column($purchasedItems, 'id');
 
-            $purchasedIds = array_column($purchasedItems, 'sparepart_id');
+            Log::info('Attempting to clear cart', [
+                'transaksi_id' => $transaksi->id,
+                'user_id' => $userId,
+                'purchased_ids' => $purchasedIds
+            ]);
 
             $cart = CartsModel::where('user_id', $userId)->first();
 
@@ -251,11 +256,17 @@ class AdminTransaksiController extends Controller
                 return;
             }
 
+            Log::info('Current cart items before clearing', [
+                'user_id' => $userId,
+                'cart_items' => $cart->items
+            ]);
+
             $remainingItems = array_filter($cart->items, function ($item) use ($purchasedIds) {
-                return !in_array($item['sparepart_id'] ?? null, $purchasedIds);
+                $itemId = $item['id'] ?? $item['sparepart_id'] ?? null;
+                return !in_array($itemId, $purchasedIds);
             });
 
-
+            // Update atau hapus cart
             if (empty($remainingItems)) {
                 $cart->delete();
                 Log::info('Cart deleted completely', [
@@ -263,7 +274,7 @@ class AdminTransaksiController extends Controller
                     'user_id' => $userId
                 ]);
             } else {
-                $cart->items = array_values($remainingItems);
+                $cart->items = array_values($remainingItems); // Reindex array
                 $cart->save();
                 Log::info('Cart updated after purchase', [
                     'transaksi_id' => $transaksi->id,
@@ -357,6 +368,89 @@ class AdminTransaksiController extends Controller
                 'error' => $e->getMessage(),
                 'servis_id' => $servisMotor->id,
                 'status' => $newStatus,
+            ]);
+
+            return false;
+        }
+    }
+
+    private function sendSparepartPurchaseNotification($transaksi)
+    {
+        try {
+            if (!$this->messaging) {
+                Log::warning('Firebase messaging not available, skipping notification');
+                return false;
+            }
+
+            if (!$transaksi->relationLoaded('user')) {
+                $transaksi->load('user');
+            }
+
+            if (!$transaksi->user || !$transaksi->user->fcm_token) {
+                Log::info('User tidak memiliki FCM token, skip notification untuk transaksi ID: ' . $transaksi->id);
+                return false;
+            }
+
+            $items = json_decode($transaksi->items_data, true);
+            $itemCount = count($items ?? []);
+            $totalFormatted = number_format($transaksi->total, 0, ',', '.');
+
+            $message = CloudMessage::withTarget('token', $transaksi->user->fcm_token)
+                ->withNotification(Notification::create(
+                    '✅ Pembayaran Berhasil!',
+                    "Pembelian {$itemCount} sparepart senilai Rp {$totalFormatted} telah berhasil. Pesanan Anda sedang diproses."
+                ))
+                ->withData([
+                    'type' => 'payment_success',
+                    'transaksi_id' => (string)$transaksi->id,
+                    'type_pembelian' => '0',
+                    'status' => 'berhasil',
+                    'total' => (string)$transaksi->total,
+                    'item_count' => (string)$itemCount,
+                    'metode_pembayaran' => $transaksi->metode_pembayaran ?? '',
+                    'updated_at' => $transaksi->updated_at->toISOString(),
+                ])
+                ->withApnsConfig(
+                    ApnsConfig::fromArray([
+                        'headers' => [
+                            'apns-priority' => '10',
+                        ],
+                        'payload' => [
+                            'aps' => [
+                                'alert' => [
+                                    'title' => '✅ Pembayaran Berhasil!',
+                                    'body' => "Pembelian {$itemCount} sparepart senilai Rp {$totalFormatted} telah berhasil. Pesanan Anda sedang diproses.",
+                                ],
+                                'sound' => 'sound.aiff',
+                                'badge' => 1,
+                                'mutable-content' => 1,
+                                'content-available' => 1,
+                            ],
+                        ],
+                    ])
+                )
+                ->withAndroidConfig(
+                    AndroidConfig::fromArray([
+                        'notification' => [
+                            'sound' => 'default',
+                            'channel_id' => 'high_importance_channel',
+                        ],
+                    ])
+                );
+
+            $this->messaging->send($message);
+
+            Log::info('Sparepart purchase notification sent successfully', [
+                'user_id' => $transaksi->user->id,
+                'transaksi_id' => $transaksi->id,
+                'total' => $transaksi->total,
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send sparepart purchase notification', [
+                'error' => $e->getMessage(),
+                'transaksi_id' => $transaksi->id,
             ]);
 
             return false;
