@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\DataTables\AdminTransactionDataTable;
 use App\Exports\TransaksiExport;
 use App\Models\AdminNotification;
+use App\Models\CartsModel;
 use App\Models\ServisMotor;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
@@ -231,43 +232,46 @@ class AdminTransaksiController extends Controller
     private function clearCartAfterPurchase($transaksi)
     {
         try {
-            $items = json_decode($transaksi->items_data, true);
+            $purchasedItems = json_decode($transaksi->items_data, true);
 
-            if (!$items || !is_array($items)) {
+            if (!$purchasedItems || !is_array($purchasedItems)) {
                 Log::warning('No items to clear from cart', ['transaksi_id' => $transaksi->id]);
                 return;
             }
 
             $userId = $transaksi->user_id;
-            $deletedCount = 0;
 
-            foreach ($items as $item) {
-                $sparepartId = $item['sparepart_id'] ?? null;
 
-                if (!$sparepartId) {
-                    continue;
-                }
+            $purchasedIds = array_column($purchasedItems, 'sparepart_id');
 
-                $deleted = DB::table('tb_carts')
-                    ->where('user_id', $userId)
-                    ->where('sparepart_id', $sparepartId)
-                    ->delete();
+            $cart = CartsModel::where('user_id', $userId)->first();
 
-                if ($deleted > 0) {
-                    $deletedCount += $deleted;
-                    Log::info('Cart item deleted', [
-                        'transaksi_id' => $transaksi->id,
-                        'user_id' => $userId,
-                        'sparepart_id' => $sparepartId,
-                    ]);
-                }
+            if (!$cart || !$cart->items) {
+                Log::info('No cart found for user', ['user_id' => $userId]);
+                return;
             }
 
-            Log::info('Cart cleared after purchase', [
-                'transaksi_id' => $transaksi->id,
-                'user_id' => $userId,
-                'items_deleted' => $deletedCount,
-            ]);
+            $remainingItems = array_filter($cart->items, function ($item) use ($purchasedIds) {
+                return !in_array($item['sparepart_id'] ?? null, $purchasedIds);
+            });
+
+
+            if (empty($remainingItems)) {
+                $cart->delete();
+                Log::info('Cart deleted completely', [
+                    'transaksi_id' => $transaksi->id,
+                    'user_id' => $userId
+                ]);
+            } else {
+                $cart->items = array_values($remainingItems);
+                $cart->save();
+                Log::info('Cart updated after purchase', [
+                    'transaksi_id' => $transaksi->id,
+                    'user_id' => $userId,
+                    'removed_items' => count($purchasedIds),
+                    'remaining_items' => count($remainingItems)
+                ]);
+            }
         } catch (\Exception $e) {
             Log::error('Failed to clear cart after purchase: ' . $e->getMessage(), [
                 'transaksi_id' => $transaksi->id,
