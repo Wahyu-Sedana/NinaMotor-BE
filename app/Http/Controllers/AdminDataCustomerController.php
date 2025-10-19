@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\DataTables\AdminDataCustomerDataTable;
+use App\Mail\EmailVerification;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 
 class AdminDataCustomerController extends Controller
@@ -42,22 +44,39 @@ class AdminDataCustomerController extends Controller
             'email'    => 'required|string|email|max:255|unique:tb_users,email',
             'password' => 'required|string|min:8|confirmed',
             'no_telp'  => 'nullable|string|max:13',
-            'alamat'   => 'nullable|string|max:255',
             'profile'  => 'nullable|string|url|max:255',
         ]);
 
         DB::beginTransaction();
 
         try {
+            $verificationToken = \Illuminate\Support\Str::random(60);
+
             $customer = User::create([
-                'nama'     => $request->nama,
-                'email'    => $request->email,
-                'password' => Hash::make($request->password),
-                'no_telp'  => $request->no_telp,
-                'alamat'   => $request->alamat,
-                'profile'  => $request->profile,
-                'role'     => 'customer',
+                'nama'                      => $request->nama,
+                'email'                     => $request->email,
+                'password'                  => Hash::make($request->password),
+                'no_telp'                   => $request->no_telp,
+                'profile'                   => $request->profile,
+                'role'                      => 'customer',
+                'email_verification_token'  => $verificationToken,
+                'email_verified_at'         => null,
             ]);
+
+            try {
+                Mail::to($customer->email)->send(new EmailVerification($customer, $verificationToken));
+
+                Log::info('Verification email sent by admin', [
+                    'customer_id' => $customer->id,
+                    'email' => $customer->email,
+                    'admin' => auth()->user()->name ?? 'Unknown'
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to send verification email: ' . $e->getMessage(), [
+                    'customer_id' => $customer->id,
+                    'email' => $customer->email
+                ]);
+            }
 
             DB::commit();
 
@@ -68,7 +87,7 @@ class AdminDataCustomerController extends Controller
             ]);
 
             return redirect()->route('admin.customer.index')
-                ->with('success', 'Customer berhasil ditambahkan!');
+                ->with('success', 'Customer berhasil ditambahkan! Email verifikasi telah dikirim ke ' . $customer->email);
         } catch (\Exception $e) {
             DB::rollBack();
 
