@@ -147,11 +147,8 @@ class AdminServisMotorController extends Controller
 
         try {
             $servisMotor = ServisMotor::findOrFail($servi);
-
             if ($servisMotor->transaksi) {
-                $servisMotor->transaksi->update([
-                    'status_pembayaran' => Transaksi::STATUS_CANCELLED
-                ]);
+                $servisMotor->transaksi->delete();
             }
 
             $servisMotor->delete();
@@ -452,13 +449,28 @@ class AdminServisMotorController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $tahun = $request->get('tahun', now()->year);
-        $bulan = $request->get('bulan');
-        $search = $request->get('search');
-        $tanggal = now()->format('Y-m-d_H-i-s');
+        try {
+            $tahun = $request->get('tahun');
+            $bulan = $request->get('bulan');
+            $status = $request->get('status');
+            $search = $request->get('search');
 
-        $filename = "Laporan_Servis_Motor_{$tanggal}.xlsx";
-        return Excel::download(new ServisMotorExport($tahun,  $bulan, $search), $filename);
+            // DEBUG - lihat dulu apa yang diterima controller
+            \Log::info('Controller received', [
+                'tahun' => $tahun,
+                'bulan' => $bulan,
+                'status' => $status,
+                'search' => $search
+            ]);
+
+            $tanggal = now()->format('Y-m-d_H-i-s');
+            $filename = "Laporan_Servis_Motor_{$tanggal}.xlsx";
+
+            return Excel::download(new ServisMotorExport($tahun, $bulan, $status, $search), $filename);
+        } catch (\Exception $e) {
+            \Log::error('Export error: ' . $e->getMessage());
+            return back()->with('error', 'Gagal export: ' . $e->getMessage());
+        }
     }
 
     /**

@@ -520,7 +520,7 @@ class UsersController extends Controller
             if (!$user) {
                 return response()->json([
                     'status'  => 404,
-                    'message' => 'User not found',
+                    'message' => 'User Tidak di temukan',
                     'user'    => []
                 ], 200);
             }
@@ -528,7 +528,7 @@ class UsersController extends Controller
             if (!Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'status'  => 401,
-                    'message' => 'Invalid credentials',
+                    'message' => 'Email atau password salah.',
                     'user'    => []
                 ], 200);
             }
@@ -537,7 +537,7 @@ class UsersController extends Controller
             if (!$user->email_verified_at) {
                 return response()->json([
                     'status'  => 403,
-                    'message' => 'Please verify your email before logging in',
+                    'message' => 'Verifikasi email anda terlebih dahulu/',
                     'user'    => []
                 ], 200);
             }
@@ -545,7 +545,7 @@ class UsersController extends Controller
             if ($user->phone_id && $user->phone_id !== $request->phone_id) {
                 return response()->json([
                     'status'  => 403,
-                    'message' => 'Akun ini sudah digunakan di perangkat lain. Silakan logout dari perangkat tersebut terlebih dahulu.',
+                    'message' => 'Akun ini sudah digunakan di perangkat lain.',
                     'user'    => []
                 ], 200);
             }

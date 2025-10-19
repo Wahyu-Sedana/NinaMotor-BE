@@ -68,7 +68,7 @@
                             <option value="in_service">Proses</option>
                             <option value="rejected">Ditolak</option>
                             <option value="done">Selesai</option>
-                            <option value="priced">Sudah Dibayar</option>
+                            <option value="priced">Konfirmasi Pembayaran</option>
                         </select>
                     </div>
 
@@ -129,15 +129,33 @@
             // Export Excel
             $('#export-excel').on('click', function(e) {
                 e.preventDefault();
+
                 let tahun = $('#filter-tahun').val();
                 let bulan = $('#filter-bulan').val();
-                let search = $('#filter-search').val();
                 let status = $('#filter-status').val();
-                let url = "{{ route('admin.servis.export.excel') }}?tahun=" + tahun + "&bulan=" + bulan +
-                    "&status" + status + "&search=" + search;
+                let search = $('#filter-search').val();
+
+                console.log('Tahun:', tahun);
+                console.log('Bulan:', bulan);
+                console.log('Status:', status);
+                console.log('Search:', search);
+
+                let url = "{{ route('admin.servis.export.excel') }}";
+                let params = [];
+
+                if (tahun) params.push('tahun=' + tahun);
+                if (bulan) params.push('bulan=' + bulan);
+                if (status) params.push('status=' + status);
+                if (search) params.push('search=' + encodeURIComponent(search));
+
+                if (params.length > 0) {
+                    url += '?' + params.join('&');
+                }
+
+                console.log('Final URL:', url);
+
                 window.location.href = url;
             });
-
             // Delete handler
             $(document).on('click', '.btn-delete', function(e) {
                 e.preventDefault();
