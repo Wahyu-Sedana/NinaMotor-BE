@@ -62,6 +62,18 @@
                         @enderror
                     </div>
 
+                    {{-- No Telepon --}}
+                    <div class="mb-3">
+                        <label for="no_telp" class="form-label">No. Telepon</label>
+                        <input type="text" class="form-control @error('no_telp') is-invalid @enderror" id="no_telp"
+                            name="no_telp" placeholder="Masukkan nomor telepon pengguna" value="{{ old('no_telp') }}">
+                        @error('no_telp')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+
+
                     {{-- Password --}}
                     <div class="mb-3">
                         <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
@@ -78,16 +90,6 @@
                                 class="text-danger">*</span></label>
                         <input type="password" class="form-control" id="password_confirmation" name="password_confirmation"
                             placeholder="Konfirmasi password" required>
-                    </div>
-
-                    {{-- Alamat --}}
-                    <div class="mb-3">
-                        <label for="alamat" class="form-label">Alamat</label>
-                        <textarea class="form-control @error('alamat') is-invalid @enderror" id="alamat" name="alamat" rows="3"
-                            placeholder="Masukkan alamat pengguna">{{ old('alamat') }}</textarea>
-                        @error('alamat')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
 
                     <hr>
