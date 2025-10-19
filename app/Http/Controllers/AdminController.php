@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ServisMotor;
 use App\Models\Sparepart;
 use App\Models\Transaksi;
 use App\Models\User;
@@ -57,6 +58,16 @@ class AdminController extends Controller
             $revenues[] = $dataPerMonth->firstWhere('month', $i)->total_revenue ?? 0;
         }
 
+        $recentTransaksi = Transaksi::with('user')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $recentServis = ServisMotor::with('user')
+            ->latest()
+            ->take(5)
+            ->get();
+
         return view('admin.dashboard', compact(
             'totalProducts',
             'totalUsers',
@@ -66,7 +77,9 @@ class AdminController extends Controller
             'totalRevenue',
             'months',
             'totals',
-            'revenues'
+            'revenues',
+            'recentTransaksi',
+            'recentServis'
         ));
     }
 
