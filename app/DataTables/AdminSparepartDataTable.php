@@ -38,6 +38,9 @@ class AdminSparepartDataTable extends DataTable
             ->addColumn('harga_formatted', function ($row) {
                 return 'Rp ' . number_format($row->harga, 0, ',', '.');
             })
+            ->editColumn('nama_sparepart', function ($row) {
+                return \Illuminate\Support\Str::limit($row->nama_sparepart, 20, '...');
+            })
             ->addColumn('stok_badge', function ($row) {
                 if ($row->stok <= 0) {
                     return '<span class="badge bg-danger">Habis (0)</span>';
