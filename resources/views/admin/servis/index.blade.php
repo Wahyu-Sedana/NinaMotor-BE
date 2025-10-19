@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('content')
-    <div class="container-fluid px-3 px-md-6 py-4 py-md-8">
+    <div class="container-fluid px-3 px-md-4 py-4">
         {{-- HEADER --}}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -12,6 +12,11 @@
                         <li class="breadcrumb-item active" aria-current="page">Servis Motor</li>
                     </ol>
                 </nav>
+            </div>
+            <div>
+                <a id="export-excel" href="#" class="btn btn-success btn-sm text-white">
+                    <i class="fas fa-file-excel"></i> <span class="d-none d-sm-inline">Export Excel</span>
+                </a>
             </div>
         </div>
 
@@ -31,13 +36,10 @@
         @endif
 
         {{-- FILTER & EXPORT --}}
-        <div class="card shadow">
-            <div class="card-header py-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                     <h6 class="m-0 font-weight-bold text-primary">Data Servis Motor</h6>
-                    <a id="export-excel" href="#" class="btn btn-success btn-sm text-white">
-                        <i class="fas fa-file-excel"></i> <span class="d-none d-sm-inline">Export Excel</span>
-                    </a>
                 </div>
 
                 {{-- Filter Section - Responsive Grid --}}
@@ -45,12 +47,7 @@
                     {{-- Filter Tahun --}}
                     <div class="col-6 col-md-3 col-lg-2">
                         <label for="filter-tahun" class="form-label small mb-1">Tahun</label>
-                        <select id="filter-tahun" class="form-select form-select-sm">
-                            <option value="">Semua</option>
-                            @for ($y = now()->year; $y >= 2020; $y--)
-                                <option value="{{ $y }}">{{ $y }}</option>
-                            @endfor
-                        </select>
+                        <select id="filter-tahun" class="form-select form-select-sm"></select>
                     </div>
 
                     {{-- Filter Bulan --}}
@@ -105,38 +102,21 @@
 
     <script>
         $(document).ready(function() {
-            // Inisialisasi DataTable dengan responsive
-            const table = $('#servismotor-table').DataTable({
-                responsive: true,
-                scrollX: false, // Matikan scroll horizontal
-                autoWidth: false,
-                columnDefs: [{
-                        responsivePriority: 1,
-                        targets: 0
-                    }, // Kolom pertama (ID/No)
-                    {
-                        responsivePriority: 2,
-                        targets: -1
-                    }, // Kolom terakhir (Actions)
-                ],
-                language: {
-                    "sProcessing": "Sedang memproses...",
-                    "sLengthMenu": "Tampilkan _MENU_ entri",
-                    "sZeroRecords": "Tidak ditemukan data yang sesuai",
-                    "sInfo": "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
-                    "sInfoEmpty": "Menampilkan 0 sampai 0 dari 0 entri",
-                    "sInfoFiltered": "(disaring dari _MAX_ entri keseluruhan)",
-                    "sSearch": "Cari:",
-                    "oPaginate": {
-                        "sFirst": "Pertama",
-                        "sPrevious": "Sebelumnya",
-                        "sNext": "Selanjutnya",
-                        "sLast": "Terakhir"
-                    }
-                }
-            });
+            // Get DataTable instance
+            const table = $('#servismotor-table').DataTable();
 
-            // Kirim filter ke ajax
+            const currentYear = new Date().getFullYear();
+
+            for (let y = currentYear; y >= 2020; y--) {
+                $('#filter-tahun').append(`<option value="${y}">${y}</option>`);
+            }
+            $('#filter-tahun').val(currentYear);
+
+            // ===================================
+            // FILTER FUNCTIONALITY
+            // ===================================
+
+            // Send filter data to server
             $('#servismotor-table').on('preXhr.dt', function(e, settings, data) {
                 data.tahun = $('#filter-tahun').val();
                 data.bulan = $('#filter-bulan').val();
@@ -144,12 +124,12 @@
                 data.search_custom = $('#filter-search').val();
             });
 
-            // Reload tabel saat filter tahun/bulan berubah
+            // Reload table on filter change
             $('#filter-tahun, #filter-bulan, #filter-status').on('change', function() {
                 table.ajax.reload();
             });
 
-            // Search dengan delay 500ms
+            // Search with delay 500ms
             let searchTimeout;
             $('#filter-search').on('keyup', function() {
                 clearTimeout(searchTimeout);
@@ -158,7 +138,10 @@
                 }, 500);
             });
 
-            // Export Excel
+            // ===================================
+            // EXPORT EXCEL
+            // ===================================
+
             $('#export-excel').on('click', function(e) {
                 e.preventDefault();
 
@@ -182,7 +165,10 @@
                 window.location.href = url;
             });
 
-            // Delete handler
+            // ===================================
+            // DELETE HANDLER
+            // ===================================
+
             $(document).on('click', '.btn-delete', function(e) {
                 e.preventDefault();
                 const url = $(this).data('url');
@@ -195,8 +181,8 @@
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
                     cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="fas fa-trash"></i> Ya, Hapus!',
-                    cancelButtonText: '<i class="fas fa-times"></i> Batal',
+                    confirmButtonText: '<i class="fas fa-trash me-1"></i>Ya, Hapus!',
+                    cancelButtonText: '<i class="fas fa-times me-1"></i>Batal',
                 }).then((result) => {
                     if (result.isConfirmed) {
                         Swal.fire({
@@ -241,14 +227,16 @@
                             },
                             error: function(xhr) {
                                 let message = 'Terjadi kesalahan saat menghapus data';
-                                if (xhr.responseJSON?.message) message = xhr
-                                    .responseJSON.message;
-                                else if (xhr.status === 404) message =
-                                    'Data tidak ditemukan';
-                                else if (xhr.status === 403) message =
-                                    'Anda tidak memiliki akses';
-                                else if (xhr.status === 500) message =
-                                    'Kesalahan server';
+
+                                if (xhr.responseJSON?.message) {
+                                    message = xhr.responseJSON.message;
+                                } else if (xhr.status === 404) {
+                                    message = 'Data tidak ditemukan';
+                                } else if (xhr.status === 403) {
+                                    message = 'Anda tidak memiliki akses';
+                                } else if (xhr.status === 500) {
+                                    message = 'Kesalahan server';
+                                }
 
                                 Swal.fire({
                                     title: 'Error!',
@@ -261,52 +249,10 @@
                 });
             });
 
-            // Tooltip refresh setiap draw
+            // Refresh tooltips after table draw
             $('#servismotor-table').on('draw.dt', function() {
                 $('[data-bs-toggle="tooltip"]').tooltip();
             });
         });
     </script>
-@endpush
-
-@push('styles')
-    <style>
-        /* Responsive adjustments */
-        @media (max-width: 767.98px) {
-            .card-header {
-                padding: 1rem !important;
-            }
-
-            .table-responsive {
-                font-size: 0.875rem;
-            }
-
-            /* DataTables responsive child row styling */
-            table.dataTable.dtr-inline.collapsed>tbody>tr>td.child,
-            table.dataTable.dtr-inline.collapsed>tbody>tr>th.child,
-            table.dataTable.dtr-inline.collapsed>tbody>tr>td.dataTables_empty {
-                cursor: default !important;
-            }
-
-            table.dataTable.dtr-inline.collapsed>tbody>tr[role="row"]>td:first-child:before,
-            table.dataTable.dtr-inline.collapsed>tbody>tr[role="row"]>th:first-child:before {
-                top: 50%;
-                left: 4px;
-                height: 14px;
-                width: 14px;
-                margin-top: -7px;
-                display: block;
-                position: absolute;
-                color: white;
-                border: 2px solid white;
-                border-radius: 14px;
-                box-shadow: 0 0 3px #444;
-                background-color: #31b131;
-                content: '+';
-                text-align: center;
-                font-family: 'Courier New', Courier, monospace;
-                line-height: 14px;
-            }
-        }
-    </style>
 @endpush

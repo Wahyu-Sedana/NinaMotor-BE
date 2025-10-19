@@ -1,7 +1,8 @@
 @extends('admin.layouts.app')
 
 @section('content')
-    <div class="container mx-auto px-6 py-8">
+    <div class="container-fluid px-3 px-md-4 py-4">
+        {{-- Header --}}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1 class="h3 mb-2 text-gray-800">Dashboard</h1>
@@ -13,97 +14,281 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-800 mb-2">Selamat datang di Admin Panel!</h2>
-            <p class="text-gray-600">Kelola aplikasi Anda dengan mudah menggunakan panel admin ini.</p>
+        {{-- Welcome Card --}}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h2 class="h5 mb-2">Selamat datang di Admin Panel!</h2>
+                <p class="text-muted mb-0">Kelola aplikasi Anda dengan mudah menggunakan panel admin ini.</p>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {{-- Statistics Cards - RESPONSIVE --}}
+        <div class="row g-3 g-md-4 mb-4">
             {{-- Total Produk --}}
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-lg text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-blue-100 text-sm">Total Produk</p>
-                        <p class="text-3xl font-bold">{{ $totalProducts }}</p>
+            <div class="col-6 col-lg-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="flex-grow-1">
+                                <p class="text-muted small mb-1">Total Produk</p>
+                                <h3 class="mb-0 fw-bold">{{ $totalProducts }}</h3>
+                            </div>
+                            <div class="text-primary opacity-75">
+                                <i class="fas fa-box fa-2x"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-blue-400 bg-opacity-30 p-3 rounded-full">
-                        <i class="fas fa-box text-2xl"></i>
+                    <div class="card-footer bg-primary bg-opacity-10 border-0 py-2">
+                        <small class="text-primary">
+                            <i class="fas fa-chart-line me-1"></i>
+                            Produk tersedia
+                        </small>
                     </div>
                 </div>
             </div>
 
             {{-- Total User --}}
-            <div class="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-lg text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-green-100 text-sm">Total User</p>
-                        <p class="text-3xl font-bold">{{ $totalUsers }}</p>
+            <div class="col-6 col-lg-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="flex-grow-1">
+                                <p class="text-muted small mb-1">Total User</p>
+                                <h3 class="mb-0 fw-bold">{{ $totalUsers }}</h3>
+                            </div>
+                            <div class="text-success opacity-75">
+                                <i class="fas fa-users fa-2x"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-green-400 bg-opacity-30 p-3 rounded-full">
-                        <i class="fas fa-users text-2xl"></i>
+                    <div class="card-footer bg-success bg-opacity-10 border-0 py-2">
+                        <small class="text-success">
+                            <i class="fas fa-user-plus me-1"></i>
+                            Pengguna terdaftar
+                        </small>
                     </div>
                 </div>
             </div>
 
             {{-- Total Order --}}
-            <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 p-6 rounded-lg text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-yellow-100 text-sm">Total Order</p>
-                        <p class="text-3xl font-bold">{{ $totalOrder }}</p>
+            <div class="col-6 col-lg-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="flex-grow-1">
+                                <p class="text-muted small mb-1">Total Order</p>
+                                <h3 class="mb-0 fw-bold">{{ $totalOrder }}</h3>
+                            </div>
+                            <div class="text-warning opacity-75">
+                                <i class="fas fa-shopping-cart fa-2x"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-yellow-400 bg-opacity-30 p-3 rounded-full">
-                        <i class="fas fa-shopping-cart text-2xl"></i>
+                    <div class="card-footer bg-warning bg-opacity-10 border-0 py-2">
+                        <small class="text-warning">
+                            <i class="fas fa-clipboard-list me-1"></i>
+                            Pesanan masuk
+                        </small>
                     </div>
                 </div>
             </div>
 
             {{-- Total Transaksi --}}
-            <div class="bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-lg text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-red-100 text-sm">Total Transaksi</p>
-                        <p class="text-3xl font-bold">Rp {{ number_format($totalTransaksi, 0, ',', '.') }}</p>
+            <div class="col-6 col-lg-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="flex-grow-1">
+                            <p class="text-muted small mb-1">Total Transaksi</p>
+                            <h3 class="mb-0 fw-bold fs-6 fs-md-4">
+                                Rp {{ number_format($totalTransaksi, 0, ',', '.') }}
+                            </h3>
+                        </div>
+                        <div class="mt-2 text-danger opacity-75">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
                     </div>
-                    <div class="bg-red-400 bg-opacity-30 p-3 rounded-full">
-                        <i class="fas fa-dollar-sign text-2xl"></i>
+                    <div class="card-footer bg-danger bg-opacity-10 border-0 py-2">
+                        <small class="text-danger">
+                            <i class="fas fa-money-bill-wave me-1"></i>
+                            Total pendapatan
+                        </small>
                     </div>
                 </div>
             </div>
         </div>
 
         {{-- NOTIFIKASI SERVIS TERBARU --}}
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">
-                    <i class="fas fa-bell text-yellow-500"></i> Notifikasi Terbaru
-                    <span id="unreadBadge" class="badge bg-danger ms-2" style="display: none;">0</span>
-                </h3>
-                <button onclick="markAllAsRead()" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-check-double"></i> Tandai Semua Dibaca
-                </button>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <i class="fas fa-bell text-warning me-2"></i>
+                        Notifikasi Terbaru
+                        <span id="unreadBadge" class="badge bg-danger ms-2" style="display: none;">0</span>
+                    </h5>
+                    <button onclick="markAllAsRead()" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-check-double"></i>
+                        <span class="d-none d-sm-inline ms-1">Tandai Semua Dibaca</span>
+                    </button>
+                </div>
             </div>
-            <div id="notificationList" class="space-y-3">
-                <div class="text-center text-gray-500 py-4">
-                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                    <p>Memuat notifikasi...</p>
+            <div class="card-body">
+                <div id="notificationList">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                        <p>Memuat notifikasi...</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- Cart Total Order dan Traffic Sources --}}
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Cart Total Order Bulanan</h3>
-                <div class="h-64 flex items-center justify-center bg-gray-50 rounded">
-                    <canvas id="cartTotalOrderChart"></canvas>
+        {{-- Recent Data Section --}}
+        <div class="row g-3 g-md-4">
+            {{-- Recent Transaksi --}}
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-shopping-cart text-warning me-2"></i>
+                                Transaksi Terbaru
+                            </h5>
+                            <a href="{{ route('admin.transaksi.index') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-arrow-right me-1"></i>Lihat Semua
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">ID Order</th>
+                                        <th>Customer</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th class="pe-3">Tanggal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($recentTransaksi ?? [] as $transaksi)
+                                        <tr>
+                                            <td class="ps-3">
+                                                <span class="badge bg-secondary">{{ $transaksi->id_order }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="text-truncate" style="max-width: 150px;">
+                                                    {{ $transaksi->user->nama ?? '-' }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <strong>Rp {{ number_format($transaksi->total_bayar, 0, ',', '.') }}</strong>
+                                            </td>
+                                            <td>
+                                                @if($transaksi->status_pembayaran == 'berhasil')
+                                                    <span class="badge bg-success">Berhasil</span>
+                                                @elseif($transaksi->status_pembayaran == 'pending')
+                                                    <span class="badge bg-warning text-dark">Pending</span>
+                                                @elseif($transaksi->status_pembayaran == 'gagal')
+                                                    <span class="badge bg-danger">Gagal</span>
+                                                @else
+                                                    <span class="badge bg-secondary">{{ ucfirst($transaksi->status_pembayaran) }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="pe-3">
+                                                <small class="text-muted">
+                                                    {{ $transaksi->created_at->diffForHumans() }}
+                                                </small>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">
+                                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                                Belum ada transaksi
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Cart Total Transaksi Bulanan</h3>
-                <div class="h-64 flex items-center justify-center bg-gray-50 rounded">
-                    <canvas id="cartTotalTransaksiChart"></canvas>
+            {{-- Recent Servis Motor --}}
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-wrench text-primary me-2"></i>
+                                Servis Motor Terbaru
+                            </h5>
+                            <a href="{{ route('admin.servis.index') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-arrow-right me-1"></i>Lihat Semua
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">Customer</th>
+                                        <th>No Kendaraan</th>
+                                        <th>Jenis Motor</th>
+                                        <th>Status</th>
+                                        <th class="pe-3">Tanggal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($recentServis ?? [] as $servis)
+                                        <tr>
+                                            <td class="ps-3">
+                                                <div class="text-truncate" style="max-width: 120px;">
+                                                    {{ $servis->user->nama ?? '-' }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ $servis->no_kendaraan }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="text-truncate" style="max-width: 100px;">
+                                                    {{ $servis->jenis_motor }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if($servis->status == 'pending')
+                                                    <span class="badge bg-warning text-dark">Pending</span>
+                                                @elseif($servis->status == 'in_service')
+                                                    <span class="badge bg-primary">Proses</span>
+                                                @elseif($servis->status == 'done')
+                                                    <span class="badge bg-success">Selesai</span>
+                                                @elseif($servis->status == 'priced')
+                                                    <span class="badge bg-info">Pembayaran</span>
+                                                @else
+                                                    <span class="badge bg-danger">Ditolak</span>
+                                                @endif
+                                            </td>
+                                            <td class="pe-3">
+                                                <small class="text-muted">
+                                                    {{ $servis->created_at->diffForHumans() }}
+                                                </small>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">
+                                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                                Belum ada servis motor
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -118,6 +303,59 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 @endsection
+
+@push('styles')
+    <style>
+        /* Responsive adjustments */
+        @media (max-width: 767.98px) {
+            .h3 {
+                font-size: 1.5rem;
+            }
+
+            .card-body h3 {
+                font-size: 1.5rem !important;
+            }
+
+            .fa-2x {
+                font-size: 1.5rem;
+            }
+            
+            .table {
+                font-size: 0.875rem;
+            }
+            
+            .table th,
+            .table td {
+                padding: 0.5rem 0.25rem;
+            }
+        }
+
+        /* Card hover effect */
+        .card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+
+        /* Notification item styling */
+        .notification-item {
+            transition: all 0.3s ease;
+            border-left: 3px solid #ffc107;
+        }
+
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        /* Table row hover */
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+    </style>
+@endpush
 
 @push('scripts')
     <script>
@@ -156,7 +394,7 @@
             }
         });
 
-        // Subscribe to admin notifications topic
+        // Subscribe functions
         function subscribeToAdminTopic(token) {
             fetch('{{ route('admin.subscribe-topic') }}', {
                     method: 'POST',
@@ -170,12 +408,8 @@
                     })
                 })
                 .then(response => response.json())
-                .then(data => {
-                    console.log('✅ Subscribed to admin_notifications topic:', data);
-                })
-                .catch(error => {
-                    console.error('❌ Failed to subscribe:', error);
-                });
+                .then(data => console.log('✅ Subscribed to admin_notifications:', data))
+                .catch(error => console.error('❌ Failed to subscribe:', error));
         }
 
         function subscribeToAdminTopicTransaksi(token) {
@@ -191,33 +425,25 @@
                     })
                 })
                 .then(response => response.json())
-                .then(data => {
-                    console.log('✅ Subscribed to admin_notifications topic:', data);
-                })
-                .catch(error => {
-                    console.error('❌ Failed to subscribe:', error);
-                });
+                .then(data => console.log('✅ Subscribed to admin_notifications transaksi:', data))
+                .catch(error => console.error('❌ Failed to subscribe:', error));
         }
 
-
-        // Listen for foreground messages from Firebase
+        // Listen for foreground messages
         messaging.onMessage((payload) => {
             console.log('📨 Firebase message received:', payload);
-
-            const notification = payload.notification || {};
-            const data = payload.data || {};
-
-            // Play notification sound
             playNotificationSound();
 
-            // Reload notifications from database (sudah di-insert dari backend)
             setTimeout(() => {
                 loadUnreadNotifications();
+                loadUnreadNotificationsTransaksi();
                 updateUnreadCount();
             }, 500);
 
-            // Show browser notification
             if (Notification.permission === 'granted') {
+                const notification = payload.notification || {};
+                const data = payload.data || {};
+
                 new Notification(notification.title || 'Notifikasi Baru', {
                     body: notification.body || 'Ada notifikasi baru untuk Anda',
                     icon: '/images/logo.png',
@@ -232,32 +458,19 @@
         // NOTIFICATION FUNCTIONS
         // ===================================
 
-        // Load unread notifications from database
         function loadUnreadNotifications() {
             fetch('{{ route('admin.notifications.unread') }}')
                 .then(response => response.json())
                 .then(result => {
-                    console.log('📊 Notifications loaded:', result);
-
                     if (result.success && result.data && result.data.length > 0) {
                         displayNotifications(result.data);
                     } else {
-                        document.getElementById('notificationList').innerHTML = `
-                            <div class="text-center text-gray-500 py-4">
-                                <i class="fas fa-bell-slash text-3xl mb-2"></i>
-                                <p>Belum ada notifikasi baru</p>
-                            </div>
-                        `;
+                        showEmptyState();
                     }
                 })
                 .catch(error => {
                     console.error('❌ Error loading notifications:', error);
-                    document.getElementById('notificationList').innerHTML = `
-                        <div class="text-center text-danger py-4">
-                            <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
-                            <p>Gagal memuat notifikasi</p>
-                        </div>
-                    `;
+                    showErrorState();
                 });
         }
 
@@ -265,90 +478,67 @@
             fetch('{{ route('admin.notifications.unread-transaksi') }}')
                 .then(response => response.json())
                 .then(result => {
-                    console.log('📊 Notifications loaded:', result);
-
                     if (result.success && result.data && result.data.length > 0) {
                         displayNotifications(result.data);
-                    } else {
-                        document.getElementById('notificationList').innerHTML = `
-                            <div class="text-center text-gray-500 py-4">
-                                <i class="fas fa-bell-slash text-3xl mb-2"></i>
-                                <p>Belum ada notifikasi baru</p>
-                            </div>
-                        `;
                     }
                 })
-                .catch(error => {
-                    console.error('❌ Error loading notifications:', error);
-                    document.getElementById('notificationList').innerHTML = `
-                        <div class="text-center text-danger py-4">
-                            <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
-                            <p>Gagal memuat notifikasi</p>
-                        </div>
-                    `;
-                });
+                .catch(error => console.error('❌ Error loading notifications transaksi:', error));
         }
 
-        // Display notifications list
         function displayNotifications(notifications) {
             const listElement = document.getElementById('notificationList');
             listElement.innerHTML = notifications.map(notif => createNotificationHTML(notif)).join('');
         }
 
-        // Create notification HTML
         function createNotificationHTML(notif) {
             const data = notif.data || {};
             const statusBadge = data.status ? getStatusBadge(data.status) : '';
 
             return `
-                <div class="border border-warning rounded-lg p-4 hover:bg-gray-50 transition bg-warning-subtle" 
+                <div class="notification-item border rounded-3 p-3 mb-3 bg-warning bg-opacity-10" 
                      data-notification-id="${notif.id}">
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
                         <div class="flex-grow-1">
-                            <h5 class="font-semibold text-gray-800 mb-2">
-                                <i class="fas fa-bell text-warning"></i>
+                            <h6 class="fw-semibold mb-2">
+                                <i class="fas fa-bell text-warning me-1"></i>
                                 ${notif.title}
                                 <span class="badge bg-danger ms-2">BARU</span>
-                            </h5>
-                            <p class="text-sm text-gray-700 mb-2">${notif.message}</p>
+                            </h6>
+                            <p class="text-muted small mb-2">${notif.message}</p>
                             
                             ${data.no_kendaraan ? `
-                                <p class="text-sm text-gray-600 mb-1">
+                                <div class="small mb-1">
                                     <strong>No Kendaraan:</strong> ${data.no_kendaraan}
-                                </p>` : ''}
+                                </div>` : ''}
                             
                             ${data.jenis_motor ? `
-                                <p class="text-sm text-gray-600 mb-1">
+                                <div class="small mb-1">
                                     <strong>Jenis Motor:</strong> ${data.jenis_motor}
-                                </p>` : ''}
-                            
-                            ${data.keluhan ? `
-                                <p class="text-sm text-gray-600 mb-1">
-                                    <strong>Keluhan:</strong> ${data.keluhan}
-                                </p>` : ''}
+                                </div>` : ''}
                             
                             ${data.user_name ? `
-                                <p class="text-sm text-gray-600 mb-2">
+                                <div class="small mb-2">
                                     <strong>Customer:</strong> ${data.user_name}
-                                </p>` : ''}
+                                </div>` : ''}
                             
-                            <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
                                 ${statusBadge}
-                                <span class="text-xs text-gray-500">
-                                    <i class="far fa-clock"></i> ${notif.ti4me_ago || notif.formatted_date}
+                                <span class="text-muted small">
+                                    <i class="far fa-clock me-1"></i>${notif.time_ago || notif.formatted_date}
                                 </span>
                             </div>
                         </div>
-                        <div class="ms-3 d-flex flex-column gap-2">
-                        ${notif.action_url ? `
+                        
+                        <div class="d-flex flex-row flex-md-column gap-2 align-self-start">
+                            ${notif.action_url ? `
                                 <a href="${notif.action_url}" 
-                                    class="btn btn-sm btn-primary"
-                                    onclick="markAsRead(${notif.id}, event)">
-                                    <i class="fas fa-eye"></i> Lihat
+                                   class="btn btn-sm btn-primary"
+                                   onclick="markAsRead(${notif.id}, event)">
+                                    <i class="fas fa-eye me-1"></i>Lihat
                                 </a>` : ''}
                             <button onclick="markAsRead(${notif.id}, event)" 
                                     class="btn btn-sm btn-outline-success">
-                                <i class="fas fa-check"></i> Tandai Dibaca
+                                <i class="fas fa-check me-1"></i>Tandai Dibaca
                             </button>
                         </div>
                     </div>
@@ -356,11 +546,10 @@
             `;
         }
 
-        // Get status badge
         function getStatusBadge(status) {
             const badges = {
                 'pending': '<span class="badge bg-warning text-dark">Pending</span>',
-                'in_service': '<span class="badge bg-info">Sedang Dikerjakan</span>',
+                'in_service': '<span class="badge bg-info">Proses</span>',
                 'priced': '<span class="badge bg-primary">Sudah Diprice</span>',
                 'done': '<span class="badge bg-success">Selesai</span>',
                 'rejected': '<span class="badge bg-danger">Ditolak</span>'
@@ -368,7 +557,24 @@
             return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
         }
 
-        // Mark single notification as read and delete
+        function showEmptyState() {
+            document.getElementById('notificationList').innerHTML = `
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-bell-slash fa-3x mb-3 opacity-50"></i>
+                    <p>Belum ada notifikasi baru</p>
+                </div>
+            `;
+        }
+
+        function showErrorState() {
+            document.getElementById('notificationList').innerHTML = `
+                <div class="text-center text-danger py-5">
+                    <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                    <p>Gagal memuat notifikasi</p>
+                </div>
+            `;
+        }
+
         function markAsRead(notifId, event) {
             if (event) event.preventDefault();
 
@@ -382,9 +588,6 @@
                 .then(response => response.json())
                 .then(result => {
                     if (result.success) {
-                        console.log('✅ Notification marked as read');
-
-                        // Hapus dari DOM dengan animasi
                         const notifElement = document.querySelector(`[data-notification-id="${notifId}"]`);
                         if (notifElement) {
                             notifElement.style.transition = 'all 0.3s ease-out';
@@ -394,90 +597,29 @@
                             setTimeout(() => {
                                 notifElement.remove();
 
-                                // Cek apakah masih ada notifikasi
                                 const remainingNotifs = document.querySelectorAll('[data-notification-id]');
                                 if (remainingNotifs.length === 0) {
-                                    document.getElementById('notificationList').innerHTML = `
-                                    <div class="text-center text-gray-500 py-4">
-                                        <i class="fas fa-check-circle text-3xl text-success mb-2"></i>
-                                        <p>Semua notifikasi sudah dibaca</p>
-                                    </div>
-                                `;
-                                }
-                            }, 300);
-                        }
-
-                        // Update counter
-                        updateUnreadCount();
-
-                        // Jika ada action_url dan bukan dari button tandai dibaca, redirect
-                        const notif = result.notification || {};
-                        if (notif.action_url && event && event.target.closest('a')) {
-                            setTimeout(() => {
-                                window.location.href = notif.action_url;
-                            }, 300);
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Error marking as read:', error);
-                    alert('Gagal menandai notifikasi sebagai dibaca');
-                });
-        }
-
-        function markAsReadTransaksi(notifId, event) {
-            if (event) event.preventDefault();
-
-            fetch(`{{ url('admin/notifications') }}/${notifId}/read-transaksi`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        console.log('✅ Notification marked as read');
-                        const notifElement = document.querySelector(`[data-notification-id="${notifId}"]`);
-                        if (notifElement) {
-                            notifElement.style.transition = 'all 0.3s ease-out';
-                            notifElement.style.transform = 'translateX(100%)';
-                            notifElement.style.opacity = '0';
-
-                            setTimeout(() => {
-                                notifElement.remove();
-                                const remainingNotifs = document.querySelectorAll('[data-notification-id]');
-                                if (remainingNotifs.length === 0) {
-                                    document.getElementById('notificationList').innerHTML = `
-                                    <div class="text-center text-gray-500 py-4">
-                                        <i class="fas fa-check-circle text-3xl text-success mb-2"></i>
-                                        <p>Semua notifikasi sudah dibaca</p>
-                                    </div>
-                                `;
+                                    showEmptyState();
                                 }
                             }, 300);
                         }
 
                         updateUnreadCount();
+
                         const notif = result.notification || {};
                         if (notif.action_url && event && event.target.closest('a')) {
-                            setTimeout(() => {
-                                window.location.href = notif.action_url;
-                            }, 300);
+                            setTimeout(() => window.location.href = notif.action_url, 300);
                         }
                     }
                 })
                 .catch(error => {
-                    console.error('❌ Error marking as read:', error);
-                    alert('Gagal menandai notifikasi sebagai dibaca');
+                    console.error('❌ Error:', error);
+                    alert('Gagal menandai notifikasi');
                 });
         }
 
         function markAllAsRead() {
-            if (!confirm('Tandai semua notifikasi sebagai sudah dibaca?')) {
-                return;
-            }
+            if (!confirm('Tandai semua notifikasi sebagai sudah dibaca?')) return;
 
             fetch('{{ route('admin.notifications.read-all') }}', {
                     method: 'POST',
@@ -489,62 +631,16 @@
                 .then(response => response.json())
                 .then(result => {
                     if (result.success) {
-                        console.log('✅ All notifications marked as read');
-
-                        // Clear list
-                        document.getElementById('notificationList').innerHTML = `
-                        <div class="text-center text-gray-500 py-4">
-                            <i class="fas fa-check-circle text-3xl text-success mb-2"></i>
-                            <p>Semua notifikasi telah dibaca</p>
-                        </div>
-                    `;
-
-                        // Update counter
+                        showEmptyState();
                         updateUnreadCount();
                     }
                 })
                 .catch(error => {
-                    console.error('❌ Error marking all as read:', error);
+                    console.error('❌ Error:', error);
                     alert('Gagal menandai semua notifikasi');
                 });
         }
 
-        function markAllAsReadTransaksi() {
-            if (!confirm('Tandai semua notifikasi sebagai sudah dibaca?')) {
-                return;
-            }
-
-            fetch('{{ route('admin.notifications.read-all-transaksi') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        console.log('✅ All notifications marked as read');
-
-                        // Clear list
-                        document.getElementById('notificationList').innerHTML = `
-                        <div class="text-center text-gray-500 py-4">
-                            <i class="fas fa-check-circle text-3xl text-success mb-2"></i>
-                            <p>Semua notifikasi telah dibaca</p>
-                        </div>
-                    `;
-
-                        // Update counter
-                        updateUnreadCount();
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Error marking all as read:', error);
-                    alert('Gagal menandai semua notifikasi');
-                });
-        }
-
-        // Update unread count badge
         function updateUnreadCount() {
             fetch('{{ route('admin.notifications.count') }}')
                 .then(response => response.json())
@@ -559,106 +655,20 @@
                         }
                     }
                 })
-                .catch(error => {
-                    console.error('❌ Error updating count:', error);
-                });
+                .catch(error => console.error('❌ Error updating count:', error));
         }
 
-        function updateUnreadCountTransaksi() {
-            fetch('{{ route('admin.notifications.count-transaksi') }}')
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        const badge = document.getElementById('unreadBadge');
-                        if (result.count > 0) {
-                            badge.textContent = result.count;
-                            badge.style.display = 'inline-block';
-                        } else {
-                            badge.style.display = 'none';
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Error updating count:', error);
-                });
-        }
-
-        // Play notification sound
         function playNotificationSound() {
             const audio = document.getElementById('notificationSound');
-            audio.play().catch(e => {
-                console.log('🔇 Audio play prevented (user interaction required)');
-            });
+            audio.play().catch(e => console.log('🔇 Audio play prevented'));
         }
 
-        // ===================================
-        // INITIALIZE ON PAGE LOAD
-        // ===================================
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Dashboard initialized');
-
-            // Load initial data
             loadUnreadNotifications();
             loadUnreadNotificationsTransaksi();
             updateUnreadCount();
-
-            // // Auto refresh every 10 seconds
-            // setInterval(loadUnreadNotifications, 10000);
-            // setInterval(loadUnreadNotificationsTransaksi, 10000);
-            // setInterval(updateUnreadCount, 10000);
-            // setInterval(updateUnreadCountTransaksi, 10000);
-        });
-
-        // ===================================
-        // CHARTS
-        // ===================================
-        const ctx = document.getElementById('cartTotalOrderChart');
-        const ctx1 = document.getElementById('cartTotalTransaksiChart');
-
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: @json($months),
-                datasets: [{
-                    label: 'Total Order per Bulan',
-                    data: @json($totals),
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        new Chart(ctx1, {
-            type: 'line',
-            data: {
-                labels: @json($months),
-                datasets: [{
-                    label: 'Total Transaksi per Bulan',
-                    data: @json($totals),
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
         });
     </script>
 @endpush

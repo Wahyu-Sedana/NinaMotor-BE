@@ -74,7 +74,7 @@ class AdminSparepartDataTable extends DataTable
             ->setTableId('sparepart-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->dom('Bfrtip')
+            ->dom('t<"d-flex justify-content-between align-items-center"lip>')
             ->scrollX(true)
             ->orderBy(1)
             ->selectStyleSingle()
