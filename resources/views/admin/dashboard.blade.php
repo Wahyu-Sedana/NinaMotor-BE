@@ -174,7 +174,7 @@
                                     @forelse($recentTransaksi ?? [] as $transaksi)
                                         <tr>
                                             <td class="ps-3">
-                                                <span class="badge bg-secondary">{{ $transaksi->id_order }}</span>
+                                                <span class="badge bg-secondary">{{ $transaksi->id }}</span>
                                             </td>
                                             <td>
                                                 <div class="text-truncate" style="max-width: 150px;">
@@ -182,17 +182,18 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <strong>Rp {{ number_format($transaksi->total_bayar, 0, ',', '.') }}</strong>
+                                                <strong>Rp {{ number_format($transaksi->total, 0, ',', '.') }}</strong>
                                             </td>
                                             <td>
-                                                @if($transaksi->status_pembayaran == 'berhasil')
+                                                @if ($transaksi->status_pembayaran == 'berhasil')
                                                     <span class="badge bg-success">Berhasil</span>
                                                 @elseif($transaksi->status_pembayaran == 'pending')
                                                     <span class="badge bg-warning text-dark">Pending</span>
                                                 @elseif($transaksi->status_pembayaran == 'gagal')
                                                     <span class="badge bg-danger">Gagal</span>
                                                 @else
-                                                    <span class="badge bg-secondary">{{ ucfirst($transaksi->status_pembayaran) }}</span>
+                                                    <span
+                                                        class="badge bg-secondary">{{ ucfirst($transaksi->status_pembayaran) }}</span>
                                                 @endif
                                             </td>
                                             <td class="pe-3">
@@ -259,7 +260,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                @if($servis->status == 'pending')
+                                                @if ($servis->status == 'pending')
                                                     <span class="badge bg-warning text-dark">Pending</span>
                                                 @elseif($servis->status == 'in_service')
                                                     <span class="badge bg-primary">Proses</span>
@@ -319,11 +320,11 @@
             .fa-2x {
                 font-size: 1.5rem;
             }
-            
+
             .table {
                 font-size: 0.875rem;
             }
-            
+
             .table th,
             .table td {
                 padding: 0.5rem 0.25rem;
@@ -349,7 +350,7 @@
         .notification-item:hover {
             background-color: #f8f9fa;
         }
-        
+
         /* Table row hover */
         .table-hover tbody tr:hover {
             background-color: rgba(0, 0, 0, 0.02);
@@ -507,19 +508,19 @@
                             <p class="text-muted small mb-2">${notif.message}</p>
                             
                             ${data.no_kendaraan ? `
-                                <div class="small mb-1">
-                                    <strong>No Kendaraan:</strong> ${data.no_kendaraan}
-                                </div>` : ''}
+                                        <div class="small mb-1">
+                                            <strong>No Kendaraan:</strong> ${data.no_kendaraan}
+                                        </div>` : ''}
                             
                             ${data.jenis_motor ? `
-                                <div class="small mb-1">
-                                    <strong>Jenis Motor:</strong> ${data.jenis_motor}
-                                </div>` : ''}
+                                        <div class="small mb-1">
+                                            <strong>Jenis Motor:</strong> ${data.jenis_motor}
+                                        </div>` : ''}
                             
                             ${data.user_name ? `
-                                <div class="small mb-2">
-                                    <strong>Customer:</strong> ${data.user_name}
-                                </div>` : ''}
+                                        <div class="small mb-2">
+                                            <strong>Customer:</strong> ${data.user_name}
+                                        </div>` : ''}
                             
                             <div class="d-flex align-items-center gap-2 flex-wrap">
                                 ${statusBadge}
@@ -531,11 +532,11 @@
                         
                         <div class="d-flex flex-row flex-md-column gap-2 align-self-start">
                             ${notif.action_url ? `
-                                <a href="${notif.action_url}" 
-                                   class="btn btn-sm btn-primary"
-                                   onclick="markAsRead(${notif.id}, event)">
-                                    <i class="fas fa-eye me-1"></i>Lihat
-                                </a>` : ''}
+                                        <a href="${notif.action_url}" 
+                                           class="btn btn-sm btn-primary"
+                                           onclick="markAsRead(${notif.id}, event)">
+                                            <i class="fas fa-eye me-1"></i>Lihat
+                                        </a>` : ''}
                             <button onclick="markAsRead(${notif.id}, event)" 
                                     class="btn btn-sm btn-outline-success">
                                 <i class="fas fa-check me-1"></i>Tandai Dibaca
