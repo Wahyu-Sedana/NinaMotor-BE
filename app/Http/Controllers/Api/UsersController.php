@@ -483,10 +483,11 @@ class UsersController extends Controller
                 'email' => $user->email
             ]);
 
-            return response()->json([
-                'status'  => 200,
-                'message' => 'Password reset successfully',
-            ], 200);
+            return view('auth.verify-success', [
+                'title' => 'Reset Password Berhasil',
+                'message' => 'Terima kasih — anda sudah berhasil reset password',
+                'user' => $user,
+            ]);
         } catch (\Throwable $th) {
             Log::error('Reset password error: ' . $th->getMessage());
 

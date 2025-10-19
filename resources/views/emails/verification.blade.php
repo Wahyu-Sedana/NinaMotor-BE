@@ -163,14 +163,6 @@
             </p>
 
             <div class="divider"></div>
-
-            <div class="alternative-link">
-                <p><strong>Tidak bisa klik tombol?</strong></p>
-                <p>Salin dan tempel link berikut ke browser Anda:</p>
-                <a href="{{ url('/api/verify-email/' . $token) }}">
-                    {{ url('/api/verify-email/' . $token) }}
-                </a>
-            </div>
         </div>
 
         <div class="email-footer">

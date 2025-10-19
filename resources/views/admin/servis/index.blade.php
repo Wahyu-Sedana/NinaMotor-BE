@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('content')
-    <div class="container mx-auto px-6 py-8">
+    <div class="container-fluid px-3 px-md-6 py-4 py-md-8">
         {{-- HEADER --}}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -32,13 +32,20 @@
 
         {{-- FILTER & EXPORT --}}
         <div class="card shadow">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h6 class="m-0 font-weight-bold text-primary">Data Servis Motor</h6>
-                <div class="d-flex gap-2">
+            <div class="card-header py-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Data Servis Motor</h6>
+                    <a id="export-excel" href="#" class="btn btn-success btn-sm text-white">
+                        <i class="fas fa-file-excel"></i> <span class="d-none d-sm-inline">Export Excel</span>
+                    </a>
+                </div>
+
+                {{-- Filter Section - Responsive Grid --}}
+                <div class="row g-2">
                     {{-- Filter Tahun --}}
-                    <div class="d-flex align-items-center gap-2">
-                        <label for="filter-tahun" class="mb-0 small">Tahun:</label>
-                        <select id="filter-tahun" class="form-select form-select-sm" style="width: 100px;">
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <label for="filter-tahun" class="form-label small mb-1">Tahun</label>
+                        <select id="filter-tahun" class="form-select form-select-sm">
                             <option value="">Semua</option>
                             @for ($y = now()->year; $y >= 2020; $y--)
                                 <option value="{{ $y }}">{{ $y }}</option>
@@ -47,9 +54,9 @@
                     </div>
 
                     {{-- Filter Bulan --}}
-                    <div class="d-flex align-items-center gap-2">
-                        <label for="filter-bulan" class="mb-0 small">Bulan:</label>
-                        <select id="filter-bulan" class="form-select form-select-sm" style="width: 120px;">
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <label for="filter-bulan" class="form-label small mb-1">Bulan</label>
+                        <select id="filter-bulan" class="form-select form-select-sm">
                             <option value="">Semua</option>
                             @for ($m = 1; $m <= 12; $m++)
                                 <option value="{{ $m }}">
@@ -60,9 +67,9 @@
                     </div>
 
                     {{-- Filter Status --}}
-                    <div class="d-flex align-items-center gap-2">
-                        <label for="filter-status" class="mb-0 small">Status:</label>
-                        <select id="filter-status" class="form-select form-select-sm" style="width: 130px;">
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <label for="filter-status" class="form-label small mb-1">Status</label>
+                        <select id="filter-status" class="form-select form-select-sm">
                             <option value="">Semua Status</option>
                             <option value="pending">Pending</option>
                             <option value="in_service">Proses</option>
@@ -73,22 +80,18 @@
                     </div>
 
                     {{-- Filter Search --}}
-                    <div class="d-flex align-items-center gap-2">
-                        <label for="filter-search" class="mb-0 small">Cari:</label>
+                    <div class="col-12 col-lg-5">
+                        <label for="filter-search" class="form-label small mb-1">Cari</label>
                         <input type="text" id="filter-search" class="form-control form-control-sm"
-                            placeholder="Nama User / Nomor Kendaraan" style="width: 200px;">
+                            placeholder="Nama User / Nomor Kendaraan">
                     </div>
-
-                    {{-- Tombol Export --}}
-                    <a id="export-excel" href="#" class="btn btn-success btn-sm text-white">
-                        <i class="fas fa-file-excel"></i> Export Excel
-                    </a>
                 </div>
             </div>
+
             <div class="card-body">
-                <div style="overflow-x: auto;">
+                <div class="table-responsive">
                     {!! $dataTable->table(
-                        ['class' => 'table table-bordered table-striped nowrap w-100', 'id' => 'servismotor-table'],
+                        ['class' => 'table table-bordered table-striped table-hover w-100', 'id' => 'servismotor-table'],
                         true,
                     ) !!}
                 </div>
@@ -102,7 +105,36 @@
 
     <script>
         $(document).ready(function() {
-            const table = $('#servismotor-table').DataTable();
+            // Inisialisasi DataTable dengan responsive
+            const table = $('#servismotor-table').DataTable({
+                responsive: true,
+                scrollX: false, // Matikan scroll horizontal
+                autoWidth: false,
+                columnDefs: [{
+                        responsivePriority: 1,
+                        targets: 0
+                    }, // Kolom pertama (ID/No)
+                    {
+                        responsivePriority: 2,
+                        targets: -1
+                    }, // Kolom terakhir (Actions)
+                ],
+                language: {
+                    "sProcessing": "Sedang memproses...",
+                    "sLengthMenu": "Tampilkan _MENU_ entri",
+                    "sZeroRecords": "Tidak ditemukan data yang sesuai",
+                    "sInfo": "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
+                    "sInfoEmpty": "Menampilkan 0 sampai 0 dari 0 entri",
+                    "sInfoFiltered": "(disaring dari _MAX_ entri keseluruhan)",
+                    "sSearch": "Cari:",
+                    "oPaginate": {
+                        "sFirst": "Pertama",
+                        "sPrevious": "Sebelumnya",
+                        "sNext": "Selanjutnya",
+                        "sLast": "Terakhir"
+                    }
+                }
+            });
 
             // Kirim filter ke ajax
             $('#servismotor-table').on('preXhr.dt', function(e, settings, data) {
@@ -135,11 +167,6 @@
                 let status = $('#filter-status').val();
                 let search = $('#filter-search').val();
 
-                console.log('Tahun:', tahun);
-                console.log('Bulan:', bulan);
-                console.log('Status:', status);
-                console.log('Search:', search);
-
                 let url = "{{ route('admin.servis.export.excel') }}";
                 let params = [];
 
@@ -152,10 +179,9 @@
                     url += '?' + params.join('&');
                 }
 
-                console.log('Final URL:', url);
-
                 window.location.href = url;
             });
+
             // Delete handler
             $(document).on('click', '.btn-delete', function(e) {
                 e.preventDefault();
@@ -241,4 +267,46 @@
             });
         });
     </script>
+@endpush
+
+@push('styles')
+    <style>
+        /* Responsive adjustments */
+        @media (max-width: 767.98px) {
+            .card-header {
+                padding: 1rem !important;
+            }
+
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+
+            /* DataTables responsive child row styling */
+            table.dataTable.dtr-inline.collapsed>tbody>tr>td.child,
+            table.dataTable.dtr-inline.collapsed>tbody>tr>th.child,
+            table.dataTable.dtr-inline.collapsed>tbody>tr>td.dataTables_empty {
+                cursor: default !important;
+            }
+
+            table.dataTable.dtr-inline.collapsed>tbody>tr[role="row"]>td:first-child:before,
+            table.dataTable.dtr-inline.collapsed>tbody>tr[role="row"]>th:first-child:before {
+                top: 50%;
+                left: 4px;
+                height: 14px;
+                width: 14px;
+                margin-top: -7px;
+                display: block;
+                position: absolute;
+                color: white;
+                border: 2px solid white;
+                border-radius: 14px;
+                box-shadow: 0 0 3px #444;
+                background-color: #31b131;
+                content: '+';
+                text-align: center;
+                font-family: 'Courier New', Courier, monospace;
+                line-height: 14px;
+            }
+        }
+    </style>
 @endpush
