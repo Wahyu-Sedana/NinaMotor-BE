@@ -135,14 +135,14 @@ class ServisMotorExport implements FromCollection, WithHeadings, WithStyles, Wit
                 ]);
 
                 $sheet->mergeCells('C2:I2');
-                $sheet->setCellValue('C2', 'Jl. Raya Denpasar - Gilimanuk No. 123, Denpasar, Bali 80361');
+                $sheet->setCellValue('C2', 'Jl. Raya Sesetan No.312, Sesetan, Denpasar Selatan, Kota Denpasar, Bali 80223');
                 $sheet->getStyle('C2')->applyFromArray([
                     'font' => ['size' => 10],
                     'alignment' => ['horizontal' => 'center', 'vertical' => 'center']
                 ]);
 
                 $sheet->mergeCells('C3:I3');
-                $sheet->setCellValue('C3', 'Telp: (0361) 123456');
+                $sheet->setCellValue('C3', 'Telp: 0852-3770-7724');
                 $sheet->getStyle('C3')->applyFromArray([
                     'font' => ['size' => 10],
                     'alignment' => ['horizontal' => 'center', 'vertical' => 'center']
