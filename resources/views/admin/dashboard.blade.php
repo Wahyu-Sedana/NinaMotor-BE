@@ -48,7 +48,7 @@
             </div>
 
             {{-- Total User --}}
-            <div class="col-6 col-lg-3">
+            <div class="col-6 col-lg-4">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body p-3 p-md-4">
                         <div class="d-flex align-items-center justify-content-between">
@@ -71,7 +71,7 @@
             </div>
 
             {{-- Total Order --}}
-            <div class="col-6 col-lg-3">
+            <div class="col-6 col-lg-4">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body p-3 p-md-4">
                         <div class="d-flex align-items-center justify-content-between">
