@@ -93,28 +93,7 @@
                 </div>
             </div>
 
-            {{-- Total Transaksi --}}
-            <div class="col-6 col-lg-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body p-3 p-md-4">
-                        <div class="flex-grow-1">
-                            <p class="text-muted small mb-1">Total Transaksi</p>
-                            <h3 class="mb-0 fw-bold fs-6 fs-md-4">
-                                Rp {{ number_format($totalTransaksi, 0, ',', '.') }}
-                            </h3>
-                        </div>
-                        <div class="mt-2 text-danger opacity-75">
-                            <i class="fas fa-dollar-sign fa-2x"></i>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-danger bg-opacity-10 border-0 py-2">
-                        <small class="text-danger">
-                            <i class="fas fa-money-bill-wave me-1"></i>
-                            Total pendapatan
-                        </small>
-                    </div>
-                </div>
-            </div>
+
         </div>
 
         {{-- NOTIFIKASI SERVIS TERBARU --}}
@@ -508,19 +487,19 @@
                             <p class="text-muted small mb-2">${notif.message}</p>
                             
                             ${data.no_kendaraan ? `
-                                        <div class="small mb-1">
-                                            <strong>No Kendaraan:</strong> ${data.no_kendaraan}
-                                        </div>` : ''}
+                                            <div class="small mb-1">
+                                                <strong>No Kendaraan:</strong> ${data.no_kendaraan}
+                                            </div>` : ''}
                             
                             ${data.jenis_motor ? `
-                                        <div class="small mb-1">
-                                            <strong>Jenis Motor:</strong> ${data.jenis_motor}
-                                        </div>` : ''}
+                                            <div class="small mb-1">
+                                                <strong>Jenis Motor:</strong> ${data.jenis_motor}
+                                            </div>` : ''}
                             
                             ${data.user_name ? `
-                                        <div class="small mb-2">
-                                            <strong>Customer:</strong> ${data.user_name}
-                                        </div>` : ''}
+                                            <div class="small mb-2">
+                                                <strong>Customer:</strong> ${data.user_name}
+                                            </div>` : ''}
                             
                             <div class="d-flex align-items-center gap-2 flex-wrap">
                                 ${statusBadge}
@@ -532,11 +511,11 @@
                         
                         <div class="d-flex flex-row flex-md-column gap-2 align-self-start">
                             ${notif.action_url ? `
-                                        <a href="${notif.action_url}" 
-                                           class="btn btn-sm btn-primary"
-                                           onclick="markAsRead(${notif.id}, event)">
-                                            <i class="fas fa-eye me-1"></i>Lihat
-                                        </a>` : ''}
+                                            <a href="${notif.action_url}" 
+                                               class="btn btn-sm btn-primary"
+                                               onclick="markAsRead(${notif.id}, event)">
+                                                <i class="fas fa-eye me-1"></i>Lihat
+                                            </a>` : ''}
                             <button onclick="markAsRead(${notif.id}, event)" 
                                     class="btn btn-sm btn-outline-success">
                                 <i class="fas fa-check me-1"></i>Tandai Dibaca
