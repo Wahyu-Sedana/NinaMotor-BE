@@ -82,21 +82,12 @@
                             placeholder="Konfirmasi password baru">
                     </div>
 
-                    {{-- Alamat --}}
-                    <div class="mb-3">
-                        <label for="alamat" class="form-label">Alamat</label>
-                        <textarea class="form-control @error('alamat') is-invalid @enderror" id="alamat" name="alamat" rows="3"
-                            placeholder="Masukkan alamat pengguna">{{ old('alamat', $customer->alamat) }}</textarea>
-                        @error('alamat')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
                     {{-- Phone --}}
                     <div class="mb-3">
                         <label for="no_telp" class="form-label">No Telp</label>
                         <input type="text" class="form-control @error('no_telp') is-invalid @enderror" id="no_telp"
-                            name="no_telp" placeholder="Masukkan No Telp (misal: 081234567890)" required>
+                            name="no_telp" value="{{ old('no_telp', $customer->no_telp) }} placeholder="Masukkan No Telp
+                            (misal: 081234567890)" required>
                         @error('no_telp')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
